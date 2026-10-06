@@ -30,16 +30,12 @@ let EVIDENCES = [
   { title:'Esquema ESP32 — OLED I2C', desc:'Conexión SSD1306 SDA/SCL y alimentación 3.3V.', tag:'Hardware', img:'assets/images/wiring.png' }
 ];
 
-// Chart instances
-let phaseChart = null;
-let weeklyChart = null;
-
-// State
 let currentUser = null, db = null, auth = null, theme = 'dark';
 
 // ===== TOAST =====
 function toast(msg) {
   const c = document.getElementById('toast-container');
+  if (!c) return;
   const t = document.createElement('div');
   t.className = 'toast'; t.textContent = msg; c.appendChild(t);
   setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 350); }, 3200);
@@ -53,7 +49,6 @@ function renderGantt() {
     const width = ((p.end - p.start + 1) / 6) * 100;
     return `<div class="gantt-row"><div class="gantt-phase-name">${p.name}<small>${p.owners} · S${p.start}–S${p.end}</small></div><div class="gantt-track"><div class="gantt-bar" data-left="${left}" data-width="${width}"></div></div></div>`;
   }).join('');
-  // Trigger animation
   requestAnimationFrame(() => requestAnimationFrame(() => {
     document.querySelectorAll('.gantt-bar').forEach(b => { b.style.left = b.dataset.left + '%'; b.style.width = b.dataset.width + '%'; });
   }));
@@ -67,7 +62,6 @@ function renderKanban() {
     const badge = document.getElementById('count-'+c);
     if (badge) badge.textContent = n;
   });
-  // Render cards with stagger
   KANBAN_TASKS.forEach((t, i) => {
     const card = document.createElement('div');
     card.className = 'kanban-card';
@@ -85,7 +79,6 @@ function renderKanban() {
 function renderTeam() {
   document.getElementById('team-grid').innerHTML = TEAM.map(m =>
     `<div class="team-card reveal visible"><div class="avatar">${m.initials}</div><h4>${m.short}</h4><p>${m.role}</p></div>`).join('');
-  // Trigger reveal
   setTimeout(() => document.querySelectorAll('.team-card').forEach(el => el.classList.add('visible')), 100);
 }
 
@@ -96,7 +89,6 @@ function renderEvidences() {
       <img class="evidence-thumb" src="${e.img}" alt="${e.title}" loading="lazy" onerror="this.style.display='none'>
       <div class="evidence-body"><h4>${e.title}</h4><p>${e.desc}</p><span class="evidence-tag">#${e.tag}</span></div>
     </div>`).join('');
-  // Lightbox init
   document.querySelectorAll('.evidence-card').forEach(card => {
     card.addEventListener('click', e => {
       e.stopPropagation();
@@ -122,24 +114,25 @@ function setProgressUI(val) {
   const label = document.querySelector('.progress-label strong');
   if (fill) fill.style.width = val + '%';
   if (label) label.textContent = val + '%';
-  // Update chart if exists
   if (weeklyChart) weeklyChart.data.datasets[0].data = [val, 100-val];
   if (weeklyChart) weeklyChart.update();
 }
 
 function initProgress() {
   setProgressUI(localStorage.getItem('aida_progress') || '35');
-  document.getElementById('update-progress-btn').addEventListener('click', () => {
-    if (!currentUser) { toast('Inicia sesión para editar'); return; }
-    const val = document.getElementById('progress-input').value;
-    if (val !== '' && val >= 0 && val <= 100) {
-      localStorage.setItem('aida_progress', val);
-      setProgressUI(val);
-      if (db && currentUser) db.ref('progress/global').set({ value: Number(val), by: currentUser.email, at: Date.now() });
-      toast('Progreso actualizado: ' + val + '%');
-    }
-  });
-  // Initialize chart after DOM is ready
+  const pb = document.getElementById('update-progress-btn');
+  if (pb) {
+    pb.addEventListener('click', () => {
+      if (!currentUser) { toast('Inicia sesión para editar'); return; }
+      const val = document.getElementById('progress-input').value;
+      if (val !== '' && val >= 0 && val <= 100) {
+        localStorage.setItem('aida_progress', val);
+        setProgressUI(val);
+        if (db && currentUser) db.ref('progress/global').set({ value: Number(val), by: currentUser.email, at: Date.now() });
+        toast('Progreso actualizado: ' + val + '%');
+      }
+    });
+  }
   setTimeout(initCharts, 200);
 }
 
@@ -165,14 +158,16 @@ function updateAuthUI() {
     btn.textContent = 'Iniciar sesión'; btn.classList.remove('logged');
     if (addEv) addEv.classList.add('hidden');
     if (hint) { hint.textContent = 'Inicia sesión para subir nuevas evidencias.'; hint.classList.remove('ok'); }
-    if (status) status.textContent = theme === 'dark' ? 'Modo lectura pública.' : 'Modo lectura pública.';
+    if (status) status.textContent = 'Modo lectura pública.';
     if (logoutBtn) logoutBtn.classList.add('hidden');
   }
 }
 
 function initAuth() {
   const modal = document.getElementById('auth-modal');
-  document.getElementById('auth-btn').addEventListener('click', () => modal.classList.add('open'));
+  const authBtn = document.getElementById('auth-btn');
+  
+  authBtn.addEventListener('click', () => modal.classList.add('open'));
   document.getElementById('auth-close').addEventListener('click', () => modal.classList.remove('open'));
   modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
   document.getElementById('evidence-close').addEventListener('click', () => document.getElementById('evidence-modal').classList.remove('open'));
@@ -196,24 +191,59 @@ function initAuth() {
     toast('Evidencia guardada');
   });
 
-  if (!FIREBASE_ENABLED || typeof firebase === 'undefined') { updateAuthUI(); return; }
+  // FIREBASE INIT - optimized for Vercel/any hosting
+  // Usamos popup en lugar de redirect para evitar problemas de dominios en Vercel
+  if (typeof FIREBASE_ENABLED === 'undefined' || !FIREBASE_ENABLED || typeof firebase === 'undefined') {
+    updateAuthUI(); return;
+  }
+
   firebase.initializeApp(firebaseConfig);
   auth = firebase.auth(); db = firebase.database();
 
+  // Google Popup Login (no requiere redirect domains configurados)
   document.getElementById('auth-login').addEventListener('click', async () => {
     const err = document.getElementById('auth-error'); err.textContent = '';
     try {
-      await auth.signInWithEmailAndPassword(document.getElementById('auth-email').value.trim(), document.getElementById('auth-pass').value);
-      modal.classList.remove('open'); toast('Sesión iniciada');
-    } catch(e) { err.textContent = 'Error: ' + e.message; }
+      // Try Google Popup first
+      const result = await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+      currentUser = result.user;
+      modal.classList.remove('open');
+      toast('Sesión iniciada con Google');
+      updateAuthUI();
+    } catch(e) {
+      // If popup fails, try email/password
+      document.getElementById('auth-modal').classList.add('open'); // Keep open
+      // Show email/pass form inside modal or just try email
+      try {
+        const email = prompt('Ingresa tu correo institucional:');
+        if (!email) return;
+        const pass = prompt('Ingresa tu contraseña:');
+        if (!pass) return;
+        await auth.signInWithEmailAndPassword(email, pass);
+        modal.classList.remove('open');
+        currentUser = auth.currentUser;
+        toast('Sesión iniciada con correo');
+        updateAuthUI();
+      } catch(e2) {
+        err.textContent = 'Error de autenticación: ' + e2.message;
+        toast('No se pudo iniciar sesión. Verifica tus credenciales.');
+      }
+    }
   });
-  document.getElementById('auth-google').addEventListener('click', async () => {
-    const err = document.getElementById('auth-error');
-    try { await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); modal.classList.remove('open'); toast('Sesión iniciada'); }
-    catch(e) { err.textContent = 'Error: ' + e.message; }
+
+  // Auto-state change listener
+  auth.onAuthStateChanged(user => {
+    currentUser = user;
+    updateAuthUI();
+    if (user) subscribeDB();
+    // Si no hay usuario y no es refresh, mostrar modal de login
+    if (!user && !modal.classList.contains('open')) {
+      // Pequeño delay para no interferir con el click abierto
+      setTimeout(() => modal.classList.add('open'), 300);
+    }
   });
-  document.getElementById('auth-logout').addEventListener('click', () => { auth.signOut(); toast('Sesión cerrada'); });
-  auth.onAuthStateChanged(user => { currentUser = user; updateAuthUI(); if (user) subscribeDB(); });
+
+  // Subscribe to DB only if user exists
   subscribeDB();
 }
 
@@ -239,10 +269,8 @@ function subscribeDB() {
 
 // ===== EFFECTS =====
 function initEffects() {
-  // Loader hide
   setTimeout(() => document.getElementById('loader').classList.add('hide'), 600);
   
-  // Scroll progress bar
   const bar = document.getElementById('scroll-progress');
   const header = document.getElementById('site-header');
   window.addEventListener('scroll', () => {
@@ -251,11 +279,9 @@ function initEffects() {
     header.classList.toggle('scrolled', h.scrollTop > 10);
   }, { passive: true });
 
-  // Intersection Observer for reveal animations
   const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } }), { threshold: 0.12 });
   document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 
-  // Counter animation
   const counters = document.querySelectorAll('[data-count]');
   const cio = new IntersectionObserver(es => es.forEach(e => {
     if (!e.isIntersecting) return;
@@ -266,7 +292,6 @@ function initEffects() {
   }), { threshold: 0.5 });
   counters.forEach(el => cio.observe(el));
 
-  // Tilt effect on hero card
   const tilt = document.querySelector('.tilt');
   if (tilt) {
     tilt.addEventListener('mousemove', e => {
@@ -277,7 +302,6 @@ function initEffects() {
     tilt.addEventListener('mouseleave', () => tilt.style.transform = '');
   }
 
-  // Background particles canvas
   const cv = document.getElementById('bg-canvas');
   if (cv) {
     const ctx = cv.getContext('2d');
@@ -304,15 +328,9 @@ function initEffects() {
   const moonIcon = document.querySelector('.icon-moon');
   const sunIcon = document.querySelector('.icon-sun');
   
-  // Check for saved theme or preferred scheme
   const savedTheme = localStorage.getItem('aida-theme');
-  if (savedTheme) {
-    theme = savedTheme;
-    html.setAttribute('data-theme', theme);
-  } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
-    theme = 'light';
-    html.setAttribute('data-theme', theme);
-  }
+  if (savedTheme) { theme = savedTheme; html.setAttribute('data-theme', theme); }
+  else if (window.matchMedia('(prefers-color-scheme: light)').matches) { theme = 'light'; html.setAttribute('data-theme', theme); }
   
   function toggleTheme() {
     theme = theme === 'dark' ? 'light' : 'dark';
@@ -324,18 +342,15 @@ function initEffects() {
   
   if (themeBtn) {
     themeBtn.addEventListener('click', toggleTheme);
-    // Update icons based on current theme
     if (moonIcon) moonIcon.style.display = theme === 'dark' ? 'block' : 'none';
     if (sunIcon) sunIcon.style.display = theme === 'light' ? 'block' : 'none';
   }
 
-  // Toast close on Escape
   document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal.open,.lightbox.open').forEach(m => m.classList.remove('open')); });
 }
 
 // ===== CHART INIT =====
 function initCharts() {
-  // Phases chart
   const phaseCtx = document.getElementById('phase-chart')?.getContext('2d');
   if (phaseCtx) {
     phaseChart = new Chart(phaseCtx, {
@@ -346,55 +361,24 @@ function initCharts() {
           label: 'Progreso (%)',
           data: PHASES.map(p => Math.round((p.end - p.start + 1) / 6 * 100)),
           backgroundColor: PHASES.map(p => p.color || var(--cyan)),
-          borderColor: PHASES.map(p => p.color || var(--cyan)).map(c => c.rgb),
+          borderColor: PHASES.map(p => p.color || var(--cyan)).map(c => 'rgba(' + c.split(',').slice(0,3).join(',') + ',0.5)'),
           borderWidth: 2
         }]
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: { backgroundColor: var(--surface), titleColor: var(--text), bodyColor: var(--text) }
-        },
-        scales: {
-          y: { display: false, beginAtZero: true, max: 100 }
-        }
-      }
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false, beginAtZero: true, max: 100 } } }
     });
   }
 
-  // Weekly progress chart
   const weeklyCtx = document.getElementById('weekly-progress')?.getContext('2d');
   if (weeklyCtx) {
     const initialProgress = parseFloat(localStorage.getItem('aida_progress') || '35');
     weeklyChart = new Chart(weeklyCtx, {
       type: 'doughnut',
-      data: {
-        labels: ['Avance', 'Restante'],
-        datasets: [{
-          data: [initialProgress, 100 - initialProgress],
-          backgroundColor: [var(--cyan), var(--muted)],
-          borderColor: [var(--cyan2), var(--border)],
-          borderWidth: 2
-        }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: '80%',
-        plugins: {
-          legend: { position: 'bottom' },
-          tooltip: { backgroundColor: var(--surface), titleColor: var(--text), bodyColor: var(--text) }
-        }
-      }
+      data: { labels: ['Avance', 'Restante'], datasets: [{ data: [initialProgress, 100 - initialProgress], backgroundColor: [var(--cyan), var(--muted)], borderColor: [var(--cyan2), var(--border)], borderWidth: 2 }] },
+      options: { responsive: true, maintainAspectRatio: false, cutout: '80%', plugins: { legend: { position: 'bottom' } } }
     });
   }
 }
-
-// ===== KEYDOWN =====
-document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal.open,.lightbox.open').forEach(m => m.classList.remove('open')); });
 
 document.addEventListener('DOMContentLoaded', () => {
   renderGantt(); renderKanban(); renderTeam(); renderEvidences(); initProgress(); initAuth(); updateAuthUI(); initCharts(); initEffects();
