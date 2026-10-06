@@ -31,6 +31,7 @@
         <a href="#kanban">Kanban</a>
         <a href="#evidencias">Evidencias</a>
         <a href="#equipo">Equipo</a>
+        <button id="auth-btn" class="auth-btn">Iniciar sesión</button>
       </nav>
     </div>
   </header>
@@ -115,8 +116,12 @@
       <div class="container">
         <div class="section-head">
           <h2>Repositorio de Evidencias</h2>
-          <span class="badge">Actualizado semanalmente</span>
+          <div>
+            <span class="badge">Actualizado semanalmente</span>
+            <button id="add-evidence-btn" class="btn-primary small hidden">+ Subir evidencia</button>
+          </div>
         </div>
+        <p id="evidence-hint" class="hint">Inicia sesión para subir nuevas evidencias.</p>
         <div class="evidence-grid" id="evidence-grid">
           <!-- Las evidencias se cargan desde JSON / se pueden agregar aquí -->
         </div>
@@ -141,6 +146,39 @@
     </div>
   </footer>
 
+  <!-- ===== AUTH MODAL ===== -->
+  <div id="auth-modal" class="modal">
+    <div class="modal-box">
+      <span class="modal-close" id="auth-close">&times;</span>
+      <h3>Acceso equipo AIDA+</h3>
+      <p class="modal-sub">Solo para subir / editar. La visualización es pública.</p>
+      <input type="email" id="auth-email" placeholder="correo@tecsup.edu.pe">
+      <input type="password" id="auth-pass" placeholder="Contraseña">
+      <p id="auth-error" class="auth-error"></p>
+      <button id="auth-login" class="btn-primary">Ingresar</button>
+      <button id="auth-google" class="btn-ghost">Ingresar con Google</button>
+      <button id="auth-logout" class="btn-ghost hidden">Cerrar sesión</button>
+      <p id="auth-status" class="auth-status"></p>
+    </div>
+  </div>
+
+  <!-- ===== EVIDENCE MODAL (solo logueados) ===== -->
+  <div id="evidence-modal" class="modal">
+    <div class="modal-box">
+      <span class="modal-close" id="evidence-close">&times;</span>
+      <h3>Subir evidencia</h3>
+      <input type="text" id="ev-title" placeholder="Título (ej. Prueba OLED)">
+      <input type="text" id="ev-desc" placeholder="Descripción">
+      <input type="text" id="ev-tag" placeholder="Etiqueta (Hardware / Docs / Diseño)">
+      <input type="text" id="ev-img" placeholder="URL imagen (o assets/images/...)">
+      <button id="ev-save" class="btn-primary">Guardar</button>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+  <script src="firebase-config.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
