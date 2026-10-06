@@ -1,9 +1,10 @@
+/* ===== CORE DATA ===== */
 const TEAM = [
-  { id:'uriel', name:'Uriel Aron Torres Salazar', short:'Uriel Torres', initials:'UT', role:'Líder / Edge AI' },
-  { id:'magaly', name:'Magaly Yulisa Mancha Vilca', short:'Magaly Mancha', initials:'MM', role:'Hardware / Periféricos' },
-  { id:'paola', name:'Paola Ccarita Apaza', short:'Paola Ccarita', initials:'PC', role:'Redes IoT / MQTT' },
-  { id:'alexis', name:'Alexis Ramos Choque', short:'Alexis Ramos', initials:'AR', role:'IA / Firmware' },
-  { id:'xavi', name:'Xavi Andre Canaza Viza', short:'Xavi Canaza', initials:'XC', role:'Pruebas / Docs' }
+  { id:'uriel', name:'Uriel Aron Torres Salazar', short:'Uriel Torres', initials:'UT', role:'Líder / Edge AI', color:'var(--cyan)' },
+  { id:'magaly', name:'Magaly Yulisa Mancha Vilca', short:'Magaly Mancha', initials:'MM', role:'Hardware / Periféricos', color:'var(--cyan2)' },
+  { id:'paola', name:'Paola Ccarita Apaza', short:'Paola Ccarita', initials:'PC', role:'Redes IoT / MQTT', color:'var(--cyan)' },
+  { id:'alexis', name:'Alexis Ramos Choque', short:'Alexis Ramos', initials:'AR', role:'IA / Firmware', color:'var(--cyan2)' },
+  { id:'xavi', name:'Xavi Andre Canaza Viza', short:'Xavi Canaza', initials:'XC', role:'Pruebas / Docs', color:'var(--cyan)' }
 ];
 
 const PHASES = [
@@ -29,16 +30,22 @@ let EVIDENCES = [
   { title:'Esquema ESP32 — OLED I2C', desc:'Conexión SSD1306 SDA/SCL y alimentación 3.3V.', tag:'Hardware', img:'assets/images/wiring.png' }
 ];
 
-let currentUser = null, db = null, auth = null;
+// Chart instances
+let phaseChart = null;
+let weeklyChart = null;
 
+// State
+let currentUser = null, db = null, auth = null, theme = 'dark';
+
+// ===== TOAST =====
 function toast(msg) {
   const c = document.getElementById('toast-container');
   const t = document.createElement('div');
-  t.className = 'toast'; t.textContent = msg;
-  c.appendChild(t);
+  t.className = 'toast'; t.textContent = msg; c.appendChild(t);
   setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 350); }, 3200);
 }
 
+// ===== RENDER FUNCTIONS =====
 function renderGantt() {
   const body = document.getElementById('gantt-body');
   body.innerHTML = PHASES.map(p => {
@@ -46,6 +53,7 @@ function renderGantt() {
     const width = ((p.end - p.start + 1) / 6) * 100;
     return `<div class="gantt-row"><div class="gantt-phase-name">${p.name}<small>${p.owners} · S${p.start}–S${p.end}</small></div><div class="gantt-track"><div class="gantt-bar" data-left="${left}" data-width="${width}"></div></div></div>`;
   }).join('');
+  // Trigger animation
   requestAnimationFrame(() => requestAnimationFrame(() => {
     document.querySelectorAll('.gantt-bar').forEach(b => { b.style.left = b.dataset.left + '%'; b.style.width = b.dataset.width + '%'; });
   }));
@@ -59,6 +67,7 @@ function renderKanban() {
     const badge = document.getElementById('count-'+c);
     if (badge) badge.textContent = n;
   });
+  // Render cards with stagger
   KANBAN_TASKS.forEach((t, i) => {
     const card = document.createElement('div');
     card.className = 'kanban-card';
@@ -70,32 +79,36 @@ function renderKanban() {
     document.getElementById('col-'+t.col).appendChild(card);
   });
   initDnD();
+  updateKanbanFilterUI();
 }
 
 function renderTeam() {
   document.getElementById('team-grid').innerHTML = TEAM.map(m =>
     `<div class="team-card reveal visible"><div class="avatar">${m.initials}</div><h4>${m.short}</h4><p>${m.role}</p></div>`).join('');
+  // Trigger reveal
+  setTimeout(() => document.querySelectorAll('.team-card').forEach(el => el.classList.add('visible')), 100);
 }
 
 function renderEvidences() {
   const grid = document.getElementById('evidence-grid');
   grid.innerHTML = EVIDENCES.map((e, i) => `
     <div class="evidence-card" data-full="${e.img}" style="animation-delay:${i*0.07}s">
-      <img class="evidence-thumb" src="${e.img}" alt="${e.title}" loading="lazy" onerror="this.style.display='none'">
+      <img class="evidence-thumb" src="${e.img}" alt="${e.title}" loading="lazy" onerror="this.style.display='none'>
       <div class="evidence-body"><h4>${e.title}</h4><p>${e.desc}</p><span class="evidence-tag">#${e.tag}</span></div>
     </div>`).join('');
+  // Lightbox init
   document.querySelectorAll('.evidence-card').forEach(card => {
-    card.addEventListener('click', () => {
+    card.addEventListener('click', e => {
+      e.stopPropagation();
       const img = card.getAttribute('data-full');
       if (!img) return;
       let lb = document.getElementById('lightbox');
       if (!lb) {
-        lb = document.createElement('div');
-        lb.id = 'lightbox'; lb.className = 'lightbox';
-        lb.innerHTML = `<span class="lightbox-close">&times;</span><img src="" alt="">`;
+        lb = document.createElement('div'); lb.id = 'lightbox'; lb.className = 'lightbox';
+        lb.innerHTML = `<span class="lightbox-close">&times;</span><img src="" alt>`;
         document.body.appendChild(lb);
         lb.querySelector('.lightbox-close').addEventListener('click', () => lb.classList.remove('open'));
-        lb.addEventListener('click', e => { if (e.target === lb) lb.classList.remove('open'); });
+        lb.addEventListener('click', ev => { if (ev.target === lb) lb.classList.remove('open'); });
       }
       lb.querySelector('img').src = img;
       lb.classList.add('open');
@@ -103,40 +116,37 @@ function renderEvidences() {
   });
 }
 
+// ===== PROGRESS =====
 function setProgressUI(val) {
   const fill = document.querySelector('.progress-fill');
   const label = document.querySelector('.progress-label strong');
   if (fill) fill.style.width = val + '%';
   if (label) label.textContent = val + '%';
+  // Update chart if exists
+  if (weeklyChart) weeklyChart.data.datasets[0].data = [val, 100-val];
+  if (weeklyChart) weeklyChart.update();
 }
 
+function initProgress() {
+  setProgressUI(localStorage.getItem('aida_progress') || '35');
+  document.getElementById('update-progress-btn').addEventListener('click', () => {
+    if (!currentUser) { toast('Inicia sesión para editar'); return; }
+    const val = document.getElementById('progress-input').value;
+    if (val !== '' && val >= 0 && val <= 100) {
+      localStorage.setItem('aida_progress', val);
+      setProgressUI(val);
+      if (db && currentUser) db.ref('progress/global').set({ value: Number(val), by: currentUser.email, at: Date.now() });
+      toast('Progreso actualizado: ' + val + '%');
+    }
+  });
+  // Initialize chart after DOM is ready
+  setTimeout(initCharts, 200);
+}
+
+// ===== AUTH =====
 function requireAuth() {
   if (!currentUser) { document.getElementById('auth-modal').classList.add('open'); toast('Inicia sesión para editar'); return false; }
   return true;
-}
-
-function initDnD() {
-  document.querySelectorAll('.kanban-card').forEach(card => {
-    if (!currentUser) return;
-    card.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', card.dataset.taskId); card.style.opacity = '.5'; });
-    card.addEventListener('dragend', () => card.style.opacity = '1');
-  });
-  document.querySelectorAll('.kanban-cards').forEach(col => {
-    col.addEventListener('dragover', e => { if (!currentUser) return; e.preventDefault(); col.style.background = 'rgba(0,255,255,.05)'; });
-    col.addEventListener('dragleave', () => col.style.background = '');
-    col.addEventListener('drop', e => {
-      if (!currentUser) return;
-      e.preventDefault(); col.style.background = '';
-      const taskId = e.dataTransfer.getData('text/plain');
-      const newCol = col.id.replace('col-','');
-      const task = KANBAN_TASKS.find(t => t.id === taskId);
-      if (task && task.col !== newCol) {
-        task.col = newCol;
-        if (db && currentUser) db.ref('tasks/' + taskId).set(task);
-        renderKanban(); toast(taskId + ' → ' + newCol);
-      }
-    });
-  });
 }
 
 function updateAuthUI() {
@@ -155,25 +165,9 @@ function updateAuthUI() {
     btn.textContent = 'Iniciar sesión'; btn.classList.remove('logged');
     if (addEv) addEv.classList.add('hidden');
     if (hint) { hint.textContent = 'Inicia sesión para subir nuevas evidencias.'; hint.classList.remove('ok'); }
-    if (status) status.textContent = (typeof FIREBASE_ENABLED !== 'undefined' && FIREBASE_ENABLED) ? 'Modo lectura pública.' : 'Firebase no configurado.';
+    if (status) status.textContent = theme === 'dark' ? 'Modo lectura pública.' : 'Modo lectura pública.';
     if (logoutBtn) logoutBtn.classList.add('hidden');
   }
-  renderKanban();
-}
-
-function initProgress() {
-  setProgressUI(localStorage.getItem('aida_progress') || '35');
-  document.getElementById('update-progress-btn').addEventListener('click', () => {
-    if (!requireAuth()) return;
-    const val = document.getElementById('progress-input').value;
-    if (val !== '' && val >= 0 && val <= 100) {
-      localStorage.setItem('aida_progress', val);
-      setProgressUI(val);
-      if (db && currentUser) db.ref('progress/global').set({ value: Number(val), by: currentUser.email, at: Date.now() });
-      toast('Progreso actualizado: ' + val + '%');
-    }
-  });
-  if (db) { try { db.ref('progress/global').on('value', s => { const v = s.val(); if (v && v.value != null) setProgressUI(String(v.value)); }); } catch(e){} }
 }
 
 function initAuth() {
@@ -202,7 +196,7 @@ function initAuth() {
     toast('Evidencia guardada');
   });
 
-  if (typeof FIREBASE_ENABLED === 'undefined' || !FIREBASE_ENABLED || typeof firebase === 'undefined') { updateAuthUI(); return; }
+  if (!FIREBASE_ENABLED || typeof firebase === 'undefined') { updateAuthUI(); return; }
   firebase.initializeApp(firebaseConfig);
   auth = firebase.auth(); db = firebase.database();
 
@@ -243,8 +237,12 @@ function subscribeDB() {
   } catch(e) {}
 }
 
+// ===== EFFECTS =====
 function initEffects() {
+  // Loader hide
   setTimeout(() => document.getElementById('loader').classList.add('hide'), 600);
+  
+  // Scroll progress bar
   const bar = document.getElementById('scroll-progress');
   const header = document.getElementById('site-header');
   window.addEventListener('scroll', () => {
@@ -253,9 +251,11 @@ function initEffects() {
     header.classList.toggle('scrolled', h.scrollTop > 10);
   }, { passive: true });
 
+  // Intersection Observer for reveal animations
   const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } }), { threshold: 0.12 });
   document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 
+  // Counter animation
   const counters = document.querySelectorAll('[data-count]');
   const cio = new IntersectionObserver(es => es.forEach(e => {
     if (!e.isIntersecting) return;
@@ -266,14 +266,18 @@ function initEffects() {
   }), { threshold: 0.5 });
   counters.forEach(el => cio.observe(el));
 
+  // Tilt effect on hero card
   const tilt = document.querySelector('.tilt');
-  if (tilt) tilt.addEventListener('mousemove', e => {
-    const r = tilt.getBoundingClientRect();
-    const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
-    tilt.style.transform = `perspective(900px) rotateY(${x*10}deg) rotateX(${-y*10}deg)`;
-  });
-  if (tilt) tilt.addEventListener('mouseleave', () => tilt.style.transform = '');
+  if (tilt) {
+    tilt.addEventListener('mousemove', e => {
+      const r = tilt.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+      tilt.style.transform = `perspective(900px) rotateY(${x*10}deg) rotateX(${-y*10}deg)`;
+    });
+    tilt.addEventListener('mouseleave', () => tilt.style.transform = '');
+  }
 
+  // Background particles canvas
   const cv = document.getElementById('bg-canvas');
   if (cv) {
     const ctx = cv.getContext('2d');
@@ -293,9 +297,105 @@ function initEffects() {
       requestAnimationFrame(loop);
     })();
   }
+
+  // Theme toggle
+  const html = document.documentElement;
+  const themeBtn = document.getElementById('theme-toggle');
+  const moonIcon = document.querySelector('.icon-moon');
+  const sunIcon = document.querySelector('.icon-sun');
+  
+  // Check for saved theme or preferred scheme
+  const savedTheme = localStorage.getItem('aida-theme');
+  if (savedTheme) {
+    theme = savedTheme;
+    html.setAttribute('data-theme', theme);
+  } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+    theme = 'light';
+    html.setAttribute('data-theme', theme);
+  }
+  
+  function toggleTheme() {
+    theme = theme === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', theme);
+    localStorage.setItem('aida-theme', theme);
+    if (moonIcon) moonIcon.style.display = theme === 'dark' ? 'block' : 'none';
+    if (sunIcon) sunIcon.style.display = theme === 'light' ? 'block' : 'none';
+  }
+  
+  if (themeBtn) {
+    themeBtn.addEventListener('click', toggleTheme);
+    // Update icons based on current theme
+    if (moonIcon) moonIcon.style.display = theme === 'dark' ? 'block' : 'none';
+    if (sunIcon) sunIcon.style.display = theme === 'light' ? 'block' : 'none';
+  }
+
+  // Toast close on Escape
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal.open,.lightbox.open').forEach(m => m.classList.remove('open')); });
 }
 
+// ===== CHART INIT =====
+function initCharts() {
+  // Phases chart
+  const phaseCtx = document.getElementById('phase-chart')?.getContext('2d');
+  if (phaseCtx) {
+    phaseChart = new Chart(phaseCtx, {
+      type: 'bar',
+      data: {
+        labels: PHASES.map(p => p.name.split(' ')[1] + ' ' + p.name.split(' ')[2]),
+        datasets: [{
+          label: 'Progreso (%)',
+          data: PHASES.map(p => Math.round((p.end - p.start + 1) / 6 * 100)),
+          backgroundColor: PHASES.map(p => p.color || var(--cyan)),
+          borderColor: PHASES.map(p => p.color || var(--cyan)).map(c => c.rgb),
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { backgroundColor: var(--surface), titleColor: var(--text), bodyColor: var(--text) }
+        },
+        scales: {
+          y: { display: false, beginAtZero: true, max: 100 }
+        }
+      }
+    });
+  }
+
+  // Weekly progress chart
+  const weeklyCtx = document.getElementById('weekly-progress')?.getContext('2d');
+  if (weeklyCtx) {
+    const initialProgress = parseFloat(localStorage.getItem('aida_progress') || '35');
+    weeklyChart = new Chart(weeklyCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Avance', 'Restante'],
+        datasets: [{
+          data: [initialProgress, 100 - initialProgress],
+          backgroundColor: [var(--cyan), var(--muted)],
+          borderColor: [var(--cyan2), var(--border)],
+          borderWidth: 2
+        }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '80%',
+        plugins: {
+          legend: { position: 'bottom' },
+          tooltip: { backgroundColor: var(--surface), titleColor: var(--text), bodyColor: var(--text) }
+        }
+      }
+    });
+  }
+}
+
+// ===== KEYDOWN =====
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal.open,.lightbox.open').forEach(m => m.classList.remove('open')); });
+
 document.addEventListener('DOMContentLoaded', () => {
-  renderGantt(); renderKanban(); renderTeam(); renderEvidences(); initProgress(); initAuth(); updateAuthUI(); initEffects();
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal.open,.lightbox.open').forEach(m => m.classList.remove('open')); });
+  renderGantt(); renderKanban(); renderTeam(); renderEvidences(); initProgress(); initAuth(); updateAuthUI(); initCharts(); initEffects();
 });
