@@ -1,0 +1,12 @@
+{
+  "name": "aida-plus-seguimiento",
+  "version": "1.0.0",
+  "description": "Portal de seguimiento oficial AIDA+ - Hito N° 2",
+  "private": true,
+  "scripts": {
+    "dev": "npx serve public -l 3000",
+    "build": "echo 'No build step required'"
+  },
+  "author": "Equipo AIDA+ - Tecsup",
+  "license": "MIT"
+}

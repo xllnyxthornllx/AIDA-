@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIDA+ - Hito N° 2 | Seguimiento de Proyecto</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- ===== HEADER / AUDITORÍA ===== -->
+  <audit-banner>
+    <div class="audit-inner">
+      <span class="pulse-dot"></span>
+      <p><strong>Plataforma de Seguimiento Oficial - Hito N° 2.</strong> Acceso de auditoría y visualización configurado para el docente: <code>rllerenad@tecsup.edu.pe</code></p>
+    </div>
+  </audit-banner>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">⟨/⟩</span>
+        <h1>AIDA+</h1>
+      </div>
+      <nav>
+        <a href="#gantt">Cronograma</a>
+        <a href="#kanban">Kanban</a>
+        <a href="#equipo">Equipo</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- ===== GANTT / CRONOGRAMA ===== -->
+    <section id="gantt" class="section">
+      <div class="section-header">
+        <h2>📅 Cronograma de Implementación</h2>
+        <span class="badge">6 Semanas</span>
+      </div>
+      <div class="gantt-wrapper">
+        <div class="gantt-header">
+          <div class="gantt-label">Fase</div>
+          <div class="gantt-weeks">
+            <span>S1</span><span>S2</span><span>S3</span><span>S4</span><span>S5</span><span>S6</span>
+          </div>
+        </div>
+        <div id="gantt-body"></div>
+      </div>
+    </section>
+
+    <!-- ===== KANBAN ===== -->
+    <section id="kanban" class="section">
+      <div class="section-header">
+        <h2>📋 Tablero Kanban</h2>
+        <span class="badge">Reemplaza Trello</span>
+      </div>
+      <div class="kanban-board" id="kanban-board">
+        <div class="kanban-column" data-column="backlog">
+          <h3>🗂️ Backlog</h3>
+          <div class="column-cards" id="col-backlog"></div>
+        </div>
+        <div class="kanban-column" data-column="proceso">
+          <h3>⚙️ En Proceso</h3>
+          <div class="column-cards" id="col-proceso"></div>
+        </div>
+        <div class="kanban-column" data-column="validacion">
+          <h3>🔍 En Validación</h3>
+          <div class="column-cards" id="col-validacion"></div>
+        </div>
+        <div class="kanban-column" data-column="completado">
+          <h3>✅ Completado</h3>
+          <div class="column-cards" id="col-completado"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== EQUIPO ===== -->
+    <section id="equipo" class="section">
+      <div class="section-header">
+        <h2>👥 Equipo</h2>
+      </div>
+      <div class="team-grid" id="team-grid"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2026 AIDA+ — Tecsup Arequipa | Curso: Implementación de Tecnologías Emergentes</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
