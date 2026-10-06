@@ -4,13 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AIDA+ | Hito N° 2 — Seguimiento Oficial</title>
+  <meta name="description" content="Plataforma oficial de seguimiento AIDA+ — Hito 2: cronograma, Kanban, evidencias y auditoría. Tecsup Arequipa.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
   <link rel="stylesheet" href="styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-  <!-- ===== AUDIT BANNER ===== -->
+  <div id="loader"><div class="loader-core"><span>⟨/⟩</span><p>AIDA+ cargando…</p></div></div>
+  <div id="scroll-progress"></div>
+  <canvas id="bg-canvas"></canvas>
+  <div id="toast-container"></div>
+
   <div class="audit-banner">
     <div class="container audit-inner">
       <span class="live-dot"></span>
@@ -18,12 +25,11 @@
     </div>
   </div>
 
-  <!-- ===== HEADER ===== -->
-  <header class="site-header">
+  <header class="site-header" id="site-header">
     <div class="container header-inner">
       <a href="#inicio" class="brand">
         <span class="brand-icon">⟨/⟩</span>
-        <span class="brand-name">AIDA+</span>
+        <span class="brand-name">AIDA<em>+</em></span>
       </a>
       <nav class="nav">
         <a href="#inicio">Inicio</a>
@@ -37,14 +43,18 @@
   </header>
 
   <main>
-
-    <!-- ===== HERO / DASHBOARD OVERVIEW ===== -->
     <section id="inicio" class="hero">
       <div class="container hero-inner">
-        <div class="hero-text">
-          <p class="eyebrow">Tecsup Arequipa — Ciclo VI</p>
-          <h1>AIDA+ <span>Asistente Inteligente Descentralizado y Adaptable</span></h1>
-          <p class="lead">Seguimiento, responsabilidades y evidencias del proyecto IoT/Edge-AI durante 6 semanas. Reemplaza a Trello como herramienta oficial.</p>
+        <div class="hero-text reveal">
+          <p class="eyebrow"><span class="eyebrow-dot"></span>Tecsup Arequipa — Ciclo VI · IoT / Edge AI</p>
+          <h1 class="gradient-title">AIDA+ <span>Asistente Inteligente Descentralizado y Adaptable</span></h1>
+          <p class="lead">Seguimiento, responsabilidades y evidencias del proyecto durante 6 semanas. Reemplaza a Trello como herramienta oficial del Hito N° 2.</p>
+          <div class="stats-row">
+            <div class="stat"><strong data-count="5">0</strong><small>Fases</small></div>
+            <div class="stat"><strong data-count="6">0</strong><small>Semanas</small></div>
+            <div class="stat"><strong data-count="5">0</strong><small>Integrantes</small></div>
+            <div class="stat"><strong><span data-count="35">0</span>%</strong><small>Avance</small></div>
+          </div>
           <div class="progress-block">
             <div class="progress-label">Progreso global <strong>35%</strong></div>
             <div class="progress-bar"><div class="progress-fill" style="width:35%"></div></div>
@@ -54,106 +64,85 @@
             </div>
           </div>
         </div>
-        <div class="hero-visual">
-          <div class="glass-card">
-            <h3>ESP32 — Nodo Central</h3>
-            <p>Edge AI | OLED SSD1306 | WS2812B | GPS</p>
-            <span class="status">En línea</span>
+        <div class="hero-visual reveal">
+          <div class="glass-card tilt">
+            <div class="glass-glow"></div>
+            <p class="glass-eyebrow">Nodo central · Edge AI</p>
+            <h3>ESP32 + FreeRTOS</h3>
+            <p>OLED SSD1306 · WS2812B · GPS · MQTT</p>
+            <div class="chip-row"><span class="chip">Wi-Fi</span><span class="chip">BLE</span><span class="chip">MQTT</span></div>
+            <span class="status"><span class="status-dot"></span>En línea</span>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ===== GANTT ===== -->
     <section id="gantt" class="section">
       <div class="container">
-        <div class="section-head">
-          <h2>Cronograma de Implementación</h2>
+        <div class="section-head reveal">
+          <div><h2>Cronograma de Implementación</h2><p class="section-sub">Diagrama Gantt · 5 fases en 6 semanas</p></div>
           <span class="badge">6 Semanas</span>
         </div>
-        <div class="gantt-wrapper">
+        <div class="gantt-wrapper reveal">
           <div class="gantt-head">
-            <div class="gantt-phase-label">Fase</div>
-            <div class="gantt-weeks">
-              <span>S1</span><span>S2</span><span>S3</span><span>S4</span><span>S5</span><span>S6</span>
-            </div>
+            <div class="gantt-phase-label">Fase / Responsables</div>
+            <div class="gantt-weeks"><span>S1</span><span>S2</span><span>S3</span><span>S4</span><span>S5</span><span>S6</span></div>
           </div>
           <div id="gantt-body"></div>
         </div>
       </div>
     </section>
 
-    <!-- ===== KANBAN ===== -->
     <section id="kanban" class="section">
       <div class="container">
-        <div class="section-head">
-          <h2>Tablero Kanban</h2>
+        <div class="section-head reveal">
+          <div><h2>Tablero Kanban</h2><p class="section-sub">Arrastra tarjetas (solo equipo logueado)</p></div>
           <span class="badge">Reemplaza Trello</span>
         </div>
         <div class="kanban-board">
-          <div class="kanban-col">
-            <h3><span class="dot backlog"></span> Backlog</h3>
-            <div class="kanban-cards" id="col-backlog"></div>
-          </div>
-          <div class="kanban-col">
-            <h3><span class="dot doing"></span> En Proceso</h3>
-            <div class="kanban-cards" id="col-proceso"></div>
-          </div>
-          <div class="kanban-col">
-            <h3><span class="dot review"></span> En Validación</h3>
-            <div class="kanban-cards" id="col-validacion"></div>
-          </div>
-          <div class="kanban-col">
-            <h3><span class="dot done"></span> Completado</h3>
-            <div class="kanban-cards" id="col-completado"></div>
-          </div>
+          <div class="kanban-col reveal"><h3><span class="dot backlog"></span>Backlog <span class="count" id="count-backlog">0</span></h3><div class="kanban-cards" id="col-backlog"></div></div>
+          <div class="kanban-col reveal"><h3><span class="dot doing"></span>En Proceso <span class="count" id="count-proceso">0</span></h3><div class="kanban-cards" id="col-proceso"></div></div>
+          <div class="kanban-col reveal"><h3><span class="dot review"></span>En Validación <span class="count" id="count-validacion">0</span></h3><div class="kanban-cards" id="col-validacion"></div></div>
+          <div class="kanban-col reveal"><h3><span class="dot done"></span>Completado <span class="count" id="count-completado">0</span></h3><div class="kanban-cards" id="col-completado"></div></div>
         </div>
       </div>
     </section>
 
-    <!-- ===== EVIDENCIAS ===== -->
     <section id="evidencias" class="section">
       <div class="container">
-        <div class="section-head">
-          <h2>Repositorio de Evidencias</h2>
-          <div>
-            <span class="badge">Actualizado semanalmente</span>
-            <button id="add-evidence-btn" class="btn-primary small hidden">+ Subir evidencia</button>
-          </div>
+        <div class="section-head reveal">
+          <div><h2>Repositorio de Evidencias</h2><p class="section-sub">Renders, esquemas, fotos y docs — se amplía cada semana</p></div>
+          <div><span class="badge">Actualizado semanalmente</span><button id="add-evidence-btn" class="btn-primary small hidden">+ Subir evidencia</button></div>
         </div>
         <p id="evidence-hint" class="hint">Inicia sesión para subir nuevas evidencias.</p>
-        <div class="evidence-grid" id="evidence-grid">
-          <!-- Las evidencias se cargan desde JSON / se pueden agregar aquí -->
-        </div>
+        <div class="evidence-grid" id="evidence-grid"></div>
       </div>
     </section>
 
-    <!-- ===== EQUIPO ===== -->
     <section id="equipo" class="section">
       <div class="container">
-        <div class="section-head">
-          <h2>Equipo de Trabajo</h2>
+        <div class="section-head reveal">
+          <div><h2>Equipo de Trabajo</h2><p class="section-sub">Administración de Redes y Comunicaciones</p></div>
         </div>
         <div class="team-grid" id="team-grid"></div>
       </div>
     </section>
-
   </main>
 
   <footer>
-    <div class="container">
-      <p>© 2026 AIDA+ — Tecsup Arequipa | Curso: Implementación de Tecnologías Emergentes | Docente: <code>rllerenad@tecsup.edu.pe</code></p>
+    <div class="container footer-inner">
+      <p><strong>AIDA+</strong> — Tecsup Arequipa · Implementación de Tecnologías Emergentes</p>
+      <p>Docente auditor: <code>rllerenad@tecsup.edu.pe</code> · © 2026</p>
     </div>
   </footer>
 
-  <!-- ===== AUTH MODAL ===== -->
   <div id="auth-modal" class="modal">
     <div class="modal-box">
       <span class="modal-close" id="auth-close">&times;</span>
       <h3>Acceso equipo AIDA+</h3>
       <p class="modal-sub">Solo para subir / editar. La visualización es pública.</p>
-      <input type="email" id="auth-email" placeholder="correo@tecsup.edu.pe">
-      <input type="password" id="auth-pass" placeholder="Contraseña">
+      <input type="email" id="auth-email" placeholder="correo@tecsup.edu.pe" autocomplete="email">
+      <input type="password" id="auth-pass" placeholder="Contraseña" autocomplete="current-password">
       <p id="auth-error" class="auth-error"></p>
       <button id="auth-login" class="btn-primary">Ingresar</button>
       <button id="auth-google" class="btn-ghost">Ingresar con Google</button>
@@ -162,15 +151,15 @@
     </div>
   </div>
 
-  <!-- ===== EVIDENCE MODAL (solo logueados) ===== -->
   <div id="evidence-modal" class="modal">
     <div class="modal-box">
       <span class="modal-close" id="evidence-close">&times;</span>
       <h3>Subir evidencia</h3>
+      <p class="modal-sub">Se guarda en Firebase y aparece al instante.</p>
       <input type="text" id="ev-title" placeholder="Título (ej. Prueba OLED)">
       <input type="text" id="ev-desc" placeholder="Descripción">
       <input type="text" id="ev-tag" placeholder="Etiqueta (Hardware / Docs / Diseño)">
-      <input type="text" id="ev-img" placeholder="URL imagen (o assets/images/...)">
+      <input type="text" id="ev-img" placeholder="URL imagen o assets/images/...">
       <button id="ev-save" class="btn-primary">Guardar</button>
     </div>
   </div>
