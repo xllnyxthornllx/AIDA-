@@ -67,7 +67,7 @@ function renderTeam() {
 function renderEvidences() {
   const grid = document.getElementById('evidence-grid');
   grid.innerHTML = EVIDENCES.map(e => `
-    <div class="evidence-card">
+    <div class="evidence-card" data-full="${e.img}">
       <img class="evidence-thumb" src="${e.img}" alt="${e.title}" loading="lazy">
       <div class="evidence-body">
         <h4>${e.title}</h4>
@@ -75,6 +75,45 @@ function renderEvidences() {
         <span class="evidence-tag">#${e.tag}</span>
       </div>
     </div>`).join('');
+
+  // Lightbox
+  document.querySelectorAll('.evidence-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const img = card.getAttribute('data-full');
+      let lb = document.getElementById('lightbox');
+      if (!lb) {
+        lb = document.createElement('div');
+        lb.id = 'lightbox';
+        lb.className = 'lightbox';
+        lb.innerHTML = `<span class="lightbox-close">&times;</span><img src="" alt="">`;
+        document.body.appendChild(lb);
+        lb.querySelector('.lightbox-close').addEventListener('click', () => lb.classList.remove('open'));
+        lb.addEventListener('click', e => { if (e.target === lb) lb.classList.remove('open'); });
+      }
+      lb.querySelector('img').src = img;
+      lb.classList.add('open');
+    });
+  });
+}
+
+// ===== PROGRESS LOCALSTORAGE =====
+function initProgress() {
+  const saved = localStorage.getItem('aida_progress');
+  if (saved) {
+    document.querySelector('.progress-fill').style.width = saved + '%';
+    document.querySelector('.progress-label strong').textContent = saved + '%';
+  }
+  const btn = document.getElementById('update-progress-btn');
+  if (btn) {
+    btn.addEventListener('click', () => {
+      const val = document.getElementById('progress-input').value;
+      if (val >= 0 && val <= 100) {
+        localStorage.setItem('aida_progress', val);
+        document.querySelector('.progress-fill').style.width = val + '%';
+        document.querySelector('.progress-label strong').textContent = val + '%';
+      }
+    });
+  }
 }
 
 function initDnD() {
@@ -94,5 +133,5 @@ function initDnD() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  renderGantt(); renderKanban(); renderTeam(); renderEvidences(); initDnD();
+  renderGantt(); renderKanban(); renderTeam(); renderEvidences(); initDnD(); initProgress();
 });
