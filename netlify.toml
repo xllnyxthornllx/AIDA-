@@ -1,0 +1,12 @@
+[build]
+  publish = "public"
+  command = "echo 'Static site, no build needed'"
+
+[dev]
+  command = "npx serve public"
+  port = 3000
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
