@@ -161,18 +161,31 @@
 
   <!-- Auth Modal -->
   <div id="auth-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="auth-title" hidden>
-    <div class="modal-box">
+    <div class="modal-box auth-box">
       <button class="modal-close" id="auth-close" aria-label="Cerrar">&times;</button>
+      <div class="auth-brand"><span class="brand-icon" aria-hidden="true">⟨/⟩</span></div>
       <h3 id="auth-title">Acceso equipo AIDA+</h3>
       <p class="modal-sub">Solo para subir / editar. La visualización es pública.</p>
-      <form id="auth-form">
-        <div class="form-group"><label for="auth-email">Correo</label><input type="email" id="auth-email" placeholder="correo@tecsup.edu.pe" autocomplete="email" required></div>
-        <div class="form-group"><label for="auth-pass">Contraseña</label><input type="password" id="auth-pass" placeholder="Contraseña" autocomplete="current-password" required></div>
-        <p id="auth-error" class="auth-error" aria-live="polite"></p>
-        <button type="submit" id="auth-login" class="btn-primary">Ingresar</button>
-      </form>
-      <button id="auth-google" class="btn-ghost" type="button">Ingresar con Google</button>
-      <button id="auth-logout" class="btn-ghost hidden" type="button">Cerrar sesión</button>
+      <div id="auth-loggedout">
+        <button id="auth-google" class="btn-google" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.84 14.1a6.6 6.6 0 0 1 0-4.2V7.06H2.18a11 11 0 0 0 0 9.88l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15A11 11 0 0 0 2.18 7.06l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"/></svg>
+          Continuar con Google
+        </button>
+        <div class="divider"><span>o con correo institucional</span></div>
+        <form id="auth-form" novalidate>
+          <div class="form-group"><label for="auth-email">Correo</label><input type="email" id="auth-email" placeholder="usuario@tecsup.edu.pe" autocomplete="email" required></div>
+          <div class="form-group"><label for="auth-pass">Contraseña</label>
+            <div class="pass-wrap"><input type="password" id="auth-pass" placeholder="••••••••" autocomplete="current-password" required>
+            <button type="button" id="pass-toggle" class="pass-toggle" aria-label="Mostrar contraseña">👁</button></div>
+          </div>
+          <p id="auth-error" class="auth-error" aria-live="polite"></p>
+          <button type="submit" id="auth-login" class="btn-primary"><span class="btn-label">Ingresar</span></button>
+        </form>
+      </div>
+      <div id="auth-loggedin" class="hidden">
+        <div class="user-chip"><span class="avatar sm" id="user-avatar">?</span><div><strong id="user-email">—</strong><small>Equipo AIDA+</small></div></div>
+        <button id="auth-logout" class="btn-ghost" type="button">Cerrar sesión</button>
+      </div>
       <p id="auth-status" class="auth-status"></p>
     </div>
   </div>

@@ -194,8 +194,8 @@ function openTaskModal(taskId) {
 function initTaskModal() {
   const modal = document.getElementById('task-modal');
   if (!modal) return;
-  document.getElementById('task-close').addEventListener('click', () => modal.classList.remove('open'));
-  modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
+  document.getElementById('task-close').addEventListener('click', () => closeModal(modal));
+  modal.addEventListener('click', e => { if (e.target === modal) closeModal(modal); });
   document.getElementById('task-form').addEventListener('submit', e => {
     e.preventDefault();
     if (!requireAuth()) return;
@@ -206,14 +206,14 @@ function initTaskModal() {
     t.assignee = document.getElementById('task-assignee').value;
     t.col = document.getElementById('task-col').value;
     if (db) db.ref('tasks/' + id).set(t);
-    modal.classList.remove('open'); renderKanban(); toast(id + ' actualizada');
+    closeModal(modal); renderKanban(); toast(id + ' actualizada');
   });
   document.getElementById('task-delete').addEventListener('click', () => {
     if (!requireAuth()) return;
     const id = document.getElementById('task-id').value;
     KANBAN_TASKS = KANBAN_TASKS.filter(x => x.id !== id);
     if (db) db.ref('tasks/' + id).remove();
-    modal.classList.remove('open'); renderKanban(); toast(id + ' eliminada');
+    closeModal(modal); renderKanban(); toast(id + ' eliminada');
   });
 }
 
@@ -271,10 +271,34 @@ function initProgress() {
   // No initCharts() call anymore - avoids CSP errors
 }
 
+// ===== MODALES =====
+function openModal(id) {
+  const m = document.getElementById(id);
+  if (!m) return;
+  m.hidden = false;
+  requestAnimationFrame(() => m.classList.add('open'));
+  const f = m.querySelector('input, select, button.btn-primary');
+  if (f) setTimeout(() => f.focus(), 120);
+}
+function closeModal(m) {
+  if (typeof m === 'string') m = document.getElementById(m);
+  if (!m) return;
+  m.classList.remove('open');
+  setTimeout(() => { m.hidden = true; }, 220);
+}
+
 // ===== AUTH =====
 function requireAuth() {
-  if (!currentUser) { document.getElementById('auth-modal').classList.add('open'); toast('Inicia sesión para editar'); return false; }
+  if (!currentUser) { openModal('auth-modal'); toast('Inicia sesión para editar'); return false; }
   return true;
+}
+
+function authError(msg) {
+  const err = document.getElementById('auth-error');
+  err.textContent = msg;
+  err.classList.remove('shake');
+  void err.offsetWidth;
+  err.classList.add('shake');
 }
 
 function updateAuthUI() {
@@ -282,47 +306,72 @@ function updateAuthUI() {
   const addEv = document.getElementById('add-evidence-btn');
   const hint = document.getElementById('evidence-hint');
   const status = document.getElementById('auth-status');
-  const logoutBtn = document.getElementById('auth-logout');
+  const loggedOut = document.getElementById('auth-loggedout');
+  const loggedIn = document.getElementById('auth-loggedin');
   if (currentUser) {
-    btn.textContent = currentUser.email.split('@')[0] + ' ●'; btn.classList.add('logged');
+    const name = currentUser.email.split('@')[0];
+    btn.textContent = name + ' ●'; btn.classList.add('logged');
+    btn.setAttribute('aria-expanded', 'false');
     if (addEv) addEv.classList.remove('hidden');
     if (hint) { hint.textContent = 'Sesión activa como ' + currentUser.email + '. Puedes subir evidencias.'; hint.classList.add('ok'); }
     if (status) status.textContent = 'Conectado: ' + currentUser.email;
-    if (logoutBtn) logoutBtn.classList.remove('hidden');
+    if (loggedOut) loggedOut.classList.add('hidden');
+    if (loggedIn) loggedIn.classList.remove('hidden');
+    const ue = document.getElementById('user-email');
+    if (ue) ue.textContent = currentUser.email;
+    const ua = document.getElementById('user-avatar');
+    if (ua) ua.textContent = (currentUser.displayName || currentUser.email).trim().charAt(0).toUpperCase();
   } else {
     btn.textContent = 'Iniciar sesión'; btn.classList.remove('logged');
     if (addEv) addEv.classList.add('hidden');
     if (hint) { hint.textContent = 'Inicia sesión para subir nuevas evidencias.'; hint.classList.remove('ok'); }
     if (status) status.textContent = 'Modo lectura pública.';
-    if (logoutBtn) logoutBtn.classList.add('hidden');
+    if (loggedOut) loggedOut.classList.remove('hidden');
+    if (loggedIn) loggedIn.classList.add('hidden');
   }
 }
 
 function initAuth() {
   const modal = document.getElementById('auth-modal');
   const authBtn = document.getElementById('auth-btn');
-  
-  authBtn.addEventListener('click', () => modal.classList.add('open'));
-  document.getElementById('auth-close').addEventListener('click', () => modal.classList.remove('open'));
-  modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
-  document.getElementById('evidence-close').addEventListener('click', () => document.getElementById('evidence-modal').classList.remove('open'));
+
+  const openAuth = () => {
+    if (currentUser) { openModal('auth-modal'); return; }
+    document.getElementById('auth-error').textContent = '';
+    openModal('auth-modal');
+    authBtn.setAttribute('aria-expanded', 'true');
+  };
+  authBtn.addEventListener('click', openAuth);
+  document.getElementById('auth-close').addEventListener('click', () => { closeModal(modal); authBtn.setAttribute('aria-expanded', 'false'); });
+  modal.addEventListener('click', e => { if (e.target === modal) { closeModal(modal); authBtn.setAttribute('aria-expanded', 'false'); } });
+  document.getElementById('evidence-close').addEventListener('click', () => closeModal('evidence-modal'));
+  document.getElementById('evidence-modal').addEventListener('click', e => { if (e.target.id === 'evidence-modal') closeModal('evidence-modal'); });
   document.getElementById('add-evidence-btn').addEventListener('click', () => {
     if (!requireAuth()) return;
-    document.getElementById('evidence-modal').classList.add('open');
+    openModal('evidence-modal');
   });
-  document.getElementById('ev-save').addEventListener('click', () => {
+  // Mostrar / ocultar contraseña
+  document.getElementById('pass-toggle').addEventListener('click', () => {
+    const p = document.getElementById('auth-pass');
+    const show = p.type === 'password';
+    p.type = show ? 'text' : 'password';
+    document.getElementById('pass-toggle').textContent = show ? '🙈' : '👁';
+  });
+  document.getElementById('evidence-form').addEventListener('submit', e => {
+    e.preventDefault();
     if (!requireAuth()) return;
-    const e = {
+    const ev = {
       title: document.getElementById('ev-title').value.trim(),
       desc: document.getElementById('ev-desc').value.trim(),
       tag: document.getElementById('ev-tag').value.trim() || 'General',
       img: document.getElementById('ev-img').value.trim() || 'assets/images/render.png',
       by: currentUser.email, at: Date.now()
     };
-    if (!e.title) { toast('Pon un título'); return; }
-    if (db) db.ref('evidences').push(e);
-    else { EVIDENCES.push(e); renderEvidences(); }
-    document.getElementById('evidence-modal').classList.remove('open');
+    if (!ev.title) { toast('Pon un título'); return; }
+    if (db) db.ref('evidences').push(ev);
+    else { EVIDENCES.push(ev); renderEvidences(); }
+    closeModal('evidence-modal');
+    document.getElementById('evidence-form').reset();
     toast('Evidencia guardada');
   });
 
@@ -337,32 +386,42 @@ function initAuth() {
   } catch (e) { console.warn('Firebase init:', e.message); updateAuthUI(); return; }
   auth = firebase.auth(); db = firebase.database();
 
-  // Google Popup Login - no redirect, works on Vercel
-  document.getElementById('auth-login').addEventListener('click', async () => {
-    const err = document.getElementById('auth-error'); err.textContent = '';
+  const setLoading = on => document.getElementById('auth-login').classList.toggle('loading', !!on);
+
+  // Login con correo (submit del form: click + Enter, sin recargar)
+  document.getElementById('auth-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const email = document.getElementById('auth-email').value.trim();
+    const pass = document.getElementById('auth-pass').value;
+    if (!email || !pass) { authError('Ingresa correo y contraseña.'); return; }
+    setLoading(true);
     try {
-      const result = await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
-      currentUser = result.user;
-      modal.classList.remove('open');
+      await auth.signInWithEmailAndPassword(email, pass);
+      closeModal(modal);
+      toast('Sesión iniciada');
+    } catch (err2) {
+      authError('No se pudo ingresar: ' + (err2.code === 'auth/invalid-credential' ? 'credenciales incorrectas.' : err2.message));
+    } finally { setLoading(false); }
+  });
+
+  // Login con Google (popup, sin redirect: funciona en Vercel)
+  document.getElementById('auth-google').addEventListener('click', async () => {
+    setLoading(true);
+    try {
+      await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+      closeModal(modal);
       toast('Sesión iniciada con Google');
-      updateAuthUI();
-    } catch(e) {
-      // Fallback: try email/password
-      const email = prompt('Ingresa tu correo institucional:');
-      if (!email) return;
-      const pass = prompt('Ingresa tu contraseña:');
-      if (!pass) return;
-      try {
-        await auth.signInWithEmailAndPassword(email, pass);
-        modal.classList.remove('open');
-        currentUser = auth.currentUser;
-        toast('Sesión iniciada con correo');
-        updateAuthUI();
-      } catch(e2) {
-        err.textContent = 'Error: ' + e2.message;
-        toast('No se pudo iniciar sesión. Verifica tus credenciales.');
+    } catch (e2) {
+      if (e2.code !== 'auth/popup-closed-by-user' && e2.code !== 'auth/cancelled-popup-request') {
+        authError('Google: ' + e2.message);
       }
-    }
+    } finally { setLoading(false); }
+  });
+
+  document.getElementById('auth-logout').addEventListener('click', async () => {
+    await auth.signOut();
+    closeModal(modal);
+    toast('Sesión cerrada');
   });
 
   auth.onAuthStateChanged(user => {
