@@ -242,6 +242,12 @@ body {
 .evidence-doc { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; min-height:170px; background:linear-gradient(140deg,#141a26,#0d1420); color:var(--text); text-decoration:none; font-weight:600; font-size:14px; transition:.2s; }
 .evidence-doc:hover { color:var(--cyan); }
 .doc-icon { font-size:38px; }
+.drive-file-label { display:block; font-size:13px; color:var(--text); margin:4px 0 6px; }
+.drive-file-label small { color:var(--muted); font-size:11px; }
+#ev-file { width:100%; padding:10px; border:1px dashed var(--border); border-radius:10px; background:rgba(0,255,255,.03); color:var(--text); font-size:13px; }
+.drive-status { margin:8px 0; font-size:12px; color:var(--cyan); }
+.drive-bar { height:6px; border-radius:99px; background:rgba(0,255,255,.12); overflow:hidden; margin-bottom:6px; }
+.drive-bar > i { display:block; height:100%; width:0; background:var(--cyan); border-radius:99px; transition:width .2s; }
 .ev-del { display:none; position:absolute; top:10px; right:10px; z-index:5; width:30px; height:30px; border-radius:50%; border:1px solid rgba(255,107,107,.5); background:rgba(10,10,14,.85); color:#ff7b7b; font-size:17px; line-height:1; cursor:pointer; align-items:center; justify-content:center; transition:.2s; }
 .ev-del:hover { background:#ff6b6b; color:#fff; border-color:#ff6b6b; }
 #evidence-grid.can-edit .ev-del { display:flex; }
