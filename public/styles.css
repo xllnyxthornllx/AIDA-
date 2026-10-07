@@ -87,6 +87,11 @@ body {
 .header-inner { display:flex; align-items:center; justify-content:space-between; height:66px; }
 .brand { display:flex; align-items:center; gap:10px; text-decoration:none; }
 .brand-icon { color:var(--cyan); font-family:'JetBrains Mono',monospace; font-size:22px; text-shadow:0 0 16px rgba(0,255,255,.7); }
+.brand-mark { width:36px; height:36px; flex-shrink:0; filter:drop-shadow(0 0 8px rgba(0,255,255,.35)); }
+.brand-mark .logo-eye { transform-box:fill-box; transform-origin:center; animation:logo-blink 5.2s infinite; }
+.brand-mark .logo-eye.e2 { animation-delay:.12s; }
+@keyframes logo-blink { 0%,93%,100% { transform:scaleY(1); } 95%,97% { transform:scaleY(.08); } }
+.auth-brand img { width:34px; height:34px; display:block; }
 .brand-name { color:var(--text); font-weight:800; font-size:21px; letter-spacing:.5px; }
 .brand-name em { color:var(--cyan); font-style:normal; }
 .nav { display:flex; align-items:center; }

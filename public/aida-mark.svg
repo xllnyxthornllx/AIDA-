@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 124 124" role="img" aria-label="Logotipo AIDA+">
+  <defs>
+    <linearGradient id="mk-shell" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3a4556"/><stop offset=".5" stop-color="#171c25"/><stop offset="1" stop-color="#2b3444"/>
+    </linearGradient>
+    <linearGradient id="mk-plate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e8edf4"/><stop offset=".55" stop-color="#aeb8c6"/><stop offset="1" stop-color="#7c8798"/>
+    </linearGradient>
+    <filter id="mk-glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="2.2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <g stroke-width="5" stroke-linecap="round">
+    <line x1="62" y1="26" x2="62" y2="14" stroke="#00ffff"/>
+    <line x1="87.5" y1="36.5" x2="96" y2="28" stroke="#465366"/>
+    <line x1="98" y1="62" x2="110" y2="62" stroke="#00ffff"/>
+    <line x1="87.5" y1="87.5" x2="96" y2="96" stroke="#465366"/>
+    <line x1="62" y1="98" x2="62" y2="110" stroke="#00ffff"/>
+    <line x1="36.5" y1="87.5" x2="28" y2="96" stroke="#465366"/>
+    <line x1="26" y1="62" x2="14" y2="62" stroke="#00ffff"/>
+    <line x1="36.5" y1="36.5" x2="28" y2="28" stroke="#465366"/>
+  </g>
+  <g fill="#07090d" stroke-width="4">
+    <circle cx="62" cy="8" r="5.5" stroke="#00ffff"/>
+    <circle cx="100.2" cy="23.8" r="5.5" stroke="#465366"/>
+    <circle cx="116" cy="62" r="5.5" stroke="#00ffff"/>
+    <circle cx="100.2" cy="100.2" r="5.5" stroke="#465366"/>
+    <circle cx="62" cy="116" r="5.5" stroke="#00ffff"/>
+    <circle cx="23.8" cy="100.2" r="5.5" stroke="#465366"/>
+    <circle cx="8" cy="62" r="5.5" stroke="#00ffff"/>
+    <circle cx="23.8" cy="23.8" r="5.5" stroke="#465366"/>
+  </g>
+  <polygon points="62,26 93.2,44 93.2,80 62,98 30.8,80 30.8,44" fill="none" stroke="url(#mk-shell)" stroke-width="7" stroke-linejoin="round"/>
+  <polygon points="62,34 86.2,48 86.2,76 62,90 37.8,76 37.8,48" fill="url(#mk-plate)" stroke="rgba(255,255,255,.25)" stroke-width="1" stroke-linejoin="round"/>
+  <rect x="44" y="48" width="36" height="28" rx="9" fill="#05070b" stroke="#00ffff" stroke-width="2" filter="url(#mk-glow)"/>
+  <g fill="#00ffff" filter="url(#mk-glow)">
+    <rect x="52" y="53.5" width="4.5" height="10" rx="2.25"/>
+    <rect x="67.5" y="53.5" width="4.5" height="10" rx="2.25"/>
+  </g>
+  <path d="M54.5,66 Q62,72 69.5,66" fill="none" stroke="#00ffff" stroke-width="3" stroke-linecap="round" filter="url(#mk-glow)"/>
+  <g stroke="#2a3342" stroke-width="3" stroke-linecap="round">
+    <line x1="52" y1="80" x2="72" y2="80"/>
+    <line x1="54.5" y1="83" x2="69.5" y2="83"/>
+    <line x1="57" y1="86" x2="67" y2="86"/>
+  </g>
+</svg>
