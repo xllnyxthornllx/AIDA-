@@ -409,18 +409,36 @@ function initAuth() {
     } finally { setLoading(false); }
   });
 
-  // Login con Google (popup, sin redirect: funciona en Vercel)
+  // Login con Google: popup primero, redirect como fallback (Firefox/extensiones bloquean popups)
+  let googleBusy = false;
   document.getElementById('auth-google').addEventListener('click', async () => {
-    setLoading(true);
+    if (googleBusy) return;
+    googleBusy = true; setLoading(true);
+    const provider = new firebase.auth.GoogleAuthProvider();
     try {
-      await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+      await auth.signInWithPopup(provider);
       closeModal(modal);
       toast('Sesión iniciada con Google');
     } catch (e2) {
-      if (e2.code !== 'auth/popup-closed-by-user' && e2.code !== 'auth/cancelled-popup-request') {
+      if (e2.code === 'auth/popup-blocked' || e2.code === 'auth/popup-closed-by-user' || e2.code === 'auth/cancelled-popup-request') {
+        try {
+          toast('Popup bloqueado, redirigiendo a Google…');
+          await auth.signInWithRedirect(provider);
+          return; // la página se recarga hacia Google y vuelve sola
+        } catch (e3) {
+          authError('Google: ' + e3.message);
+        }
+      } else {
         authError('Google: ' + e2.message);
       }
-    } finally { setLoading(false); }
+    } finally { googleBusy = false; setLoading(false); }
+  });
+
+  // Completa el login por redirect al volver de Google
+  auth.getRedirectResult().then(res => {
+    if (res && res.user) { closeModal(modal); toast('Sesión iniciada con Google'); }
+  }).catch(e => {
+    if (e && e.code && e.code !== 'auth/popup-closed-by-user') authError('Google: ' + e.message);
   });
 
   document.getElementById('auth-logout').addEventListener('click', async () => {
