@@ -31,6 +31,52 @@ let EVIDENCES = [
 ];
 
 let currentUser = null, db = null, auth = null, theme = 'dark';
+const BASE_EVIDENCES = EVIDENCES.map(e => Object.assign({}, e));
+let REMOTE_EVIDENCES = [];
+let DELETED_TITLES = new Set();
+
+function rebuildEvidences() {
+  const seen = new Set();
+  EVIDENCES = [...BASE_EVIDENCES, ...REMOTE_EVIDENCES].filter(e => {
+    if (!e || !e.title || DELETED_TITLES.has(e.title) || seen.has(e.title)) return false;
+    seen.add(e.title);
+    return true;
+  });
+  renderEvidences();
+}
+
+function refreshEvidenceDeleteButtons() {
+  const grid = document.getElementById('evidence-grid');
+  if (grid) grid.classList.toggle('can-edit', !!currentUser);
+  document.querySelectorAll('.evidence-card').forEach(card => {
+    if (card.querySelector('.ev-del')) return;
+    const b = document.createElement('button');
+    b.className = 'ev-del';
+    b.type = 'button';
+    b.title = 'Eliminar evidencia';
+    b.setAttribute('aria-label', 'Eliminar evidencia');
+    b.textContent = '×';
+    b.addEventListener('click', ev => { ev.stopPropagation(); deleteEvidence(card); });
+    card.appendChild(b);
+  });
+}
+
+function deleteEvidence(card) {
+  if (!requireAuth()) return;
+  const h4 = card.querySelector('h4');
+  const title = h4 ? h4.textContent : '';
+  if (!title || !confirm('¿Eliminar la evidencia "' + title + '"?')) return;
+  const remote = REMOTE_EVIDENCES.find(r => r.title === title);
+  if (db) {
+    if (remote && remote._key) db.ref('evidences/' + remote._key).remove();
+    db.ref('deletedEvidences').push({ title: title, by: currentUser.email, at: Date.now() });
+  } else {
+    DELETED_TITLES.add(title);
+    EVIDENCES = EVIDENCES.filter(x => x.title !== title);
+    renderEvidences();
+  }
+  toast('Evidencia eliminada');
+}
 
 // ===== TOAST =====
 function toast(msg) {
@@ -142,6 +188,7 @@ function renderEvidences() {
       }
     });
   });
+  refreshEvidenceDeleteButtons();
 }
 
 // ===== KANBAN DnD + FILTROS =====
@@ -366,6 +413,7 @@ function updateAuthUI() {
     if (loggedOut) loggedOut.classList.remove('hidden');
     if (loggedIn) loggedIn.classList.add('hidden');
   }
+  renderEvidences();
 }
 
 function initAuth() {
@@ -486,12 +534,13 @@ function subscribeDB() {
     });
     db.ref('evidences').on('value', s => {
       const val = s.val();
-      if (val) {
-        const base = EVIDENCES.slice(0, 3);
-        const seen = new Set(base.map(e => e.title));
-        Object.values(val).forEach(e => { if (!seen.has(e.title)) base.push(e); });
-        EVIDENCES = base; renderEvidences();
-      }
+      REMOTE_EVIDENCES = val ? Object.entries(val).map(([k, v]) => Object.assign({}, v, { _key: k })) : [];
+      rebuildEvidences();
+    });
+    db.ref('deletedEvidences').on('value', s => {
+      const val = s.val();
+      DELETED_TITLES = new Set(val ? Object.values(val).map(d => d.title) : []);
+      rebuildEvidences();
     });
   } catch(e) {}
 }

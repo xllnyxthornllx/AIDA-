@@ -229,7 +229,7 @@ body {
   display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:18px; 
 }
 .evidence-card { 
-  background:var(--card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; 
+  background:var(--card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; position:relative;
   transition:transform .28s var(--ease), border-color .28s, box-shadow .28s; cursor:zoom-in; animation:cardIn .5s var(--ease) both; 
 }
 .evidence-card:hover { border-color:var(--cyan-border); transform:translateY(-6px); box-shadow:0 16px 40px rgba(0,255,255,.1); }
@@ -242,6 +242,9 @@ body {
 .evidence-doc { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; min-height:170px; background:linear-gradient(140deg,#141a26,#0d1420); color:var(--text); text-decoration:none; font-weight:600; font-size:14px; transition:.2s; }
 .evidence-doc:hover { color:var(--cyan); }
 .doc-icon { font-size:38px; }
+.ev-del { display:none; position:absolute; top:10px; right:10px; z-index:5; width:30px; height:30px; border-radius:50%; border:1px solid rgba(255,107,107,.5); background:rgba(10,10,14,.85); color:#ff7b7b; font-size:17px; line-height:1; cursor:pointer; align-items:center; justify-content:center; transition:.2s; }
+.ev-del:hover { background:#ff6b6b; color:#fff; border-color:#ff6b6b; }
+#evidence-grid.can-edit .ev-del { display:flex; }
 .evidence-fallback { align-items:center; justify-content:center; gap:8px; min-height:120px; background:#141a26; }
 .evidence-fallback a { color:var(--cyan); font-weight:600; }
 
