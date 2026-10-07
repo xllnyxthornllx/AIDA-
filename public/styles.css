@@ -262,6 +262,7 @@ body {
 .drive-status { margin:8px 0; font-size:12px; color:var(--cyan); }
 .drive-conn { font-size:12px; color:var(--muted); margin:2px 0 8px; }
 .drive-conn.ok { color:var(--cyan); }
+#drive-reconnect { margin-bottom:8px; font-size:12.5px; padding:8px 14px; }
 .drive-bar { height:6px; border-radius:99px; background:rgba(0,255,255,.12); overflow:hidden; margin-bottom:6px; }
 .drive-bar > i { display:block; height:100%; width:0; background:var(--cyan); border-radius:99px; transition:width .2s; }
 .ev-del { display:none; position:absolute; top:10px; right:10px; z-index:5; width:30px; height:30px; border-radius:50%; border:1px solid rgba(255,107,107,.5); background:rgba(10,10,14,.85); color:#ff7b7b; font-size:17px; line-height:1; cursor:pointer; align-items:center; justify-content:center; transition:.2s; }
