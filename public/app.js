@@ -424,8 +424,27 @@ function updateAuthUI() {
 // ===== GOOGLE DRIVE UPLOAD (Drive API v3, carpeta del equipo) =====
 function driveToken() {
   if (driveAccessToken) return driveAccessToken;
-  try { driveAccessToken = sessionStorage.getItem('drive_token'); } catch (e) {}
+  try {
+    driveAccessToken = localStorage.getItem('drive_token') || sessionStorage.getItem('drive_token');
+  } catch (e) {}
   return driveAccessToken;
+}
+
+function storeDriveToken(t) {
+  driveAccessToken = t;
+  try { localStorage.setItem('drive_token', t); } catch (e) {}
+  try { sessionStorage.setItem('drive_token', t); } catch (e) {}
+}
+
+function clearDriveToken() {
+  driveAccessToken = null;
+  try { localStorage.removeItem('drive_token'); } catch (e) {}
+  try { sessionStorage.removeItem('drive_token'); } catch (e) {}
+}
+
+function isGoogleUser() {
+  return !!(currentUser && currentUser.providerData &&
+    currentUser.providerData.some(p => p.providerId === 'google.com'));
 }
 
 function driveStatus(msg, pct) {
@@ -441,13 +460,20 @@ function driveStatus(msg, pct) {
 
 function paintDriveState() {
   const el = document.getElementById('drive-conn');
+  const re = document.getElementById('drive-reconnect');
   if (!el) return;
   if (driveToken()) {
     el.textContent = 'Drive conectado ✓ — puedes subir archivos a la carpeta del equipo.';
     el.className = 'drive-conn ok';
+    if (re) re.classList.add('hidden');
+  } else if (isGoogleUser()) {
+    el.textContent = 'Entraste con Google pero sin permiso de Drive. Pulsa "Reconectar Drive" y acepta el permiso.';
+    el.className = 'drive-conn';
+    if (re) re.classList.remove('hidden');
   } else {
     el.textContent = 'Para subir archivos entra con "Continuar con Google" (otorga permiso de Drive). Con correo solo puedes pegar links.';
     el.className = 'drive-conn';
+    if (re) re.classList.add('hidden');
   }
 }
 
@@ -482,8 +508,8 @@ function uploadToDrive(file, onProgress) {
           xp.onerror = () => resolve(f);
           xp.send(JSON.stringify({ role: 'reader', type: 'anyone' }));
         } else if (xhr.status === 401 || xhr.status === 403) {
-          try { sessionStorage.removeItem('drive_token'); } catch (e) {}
-          driveAccessToken = null;
+          clearDriveToken();
+          paintDriveState();
           reject(new Error('Permiso de Drive vencido. Cierra sesión y entra de nuevo con Google.'));
         } else {
           let detail = '';
@@ -632,10 +658,11 @@ function initAuth() {
       const provider = new firebase.auth.GoogleAuthProvider();
       provider.addScope(DRIVE_SCOPE);
       const result = await auth.signInWithPopup(provider);
-      const cred = firebase.auth.GoogleAuthProvider.credentialFromResult(result);
+      const cred = firebase.auth.GoogleAuthProvider.credentialFromResult(result) || (result && result.credential);
       if (cred && cred.accessToken) {
-        driveAccessToken = cred.accessToken;
-        try { sessionStorage.setItem('drive_token', driveAccessToken); } catch (e) {}
+        storeDriveToken(cred.accessToken);
+      } else {
+        console.warn('[Drive] login Google sin accessToken en el resultado');
       }
       closeModal(modal);
       toast('Sesión iniciada con Google');
@@ -651,10 +678,36 @@ function initAuth() {
 
   document.getElementById('auth-logout').addEventListener('click', async () => {
     await auth.signOut();
-    driveAccessToken = null;
-    try { sessionStorage.removeItem('drive_token'); } catch (e) {}
+    clearDriveToken();
     closeModal(modal);
     toast('Sesión cerrada');
+  });
+
+  // Reconectar Drive: re-login con Google en el mismo gesto (evita bloqueo de popup)
+  document.getElementById('drive-reconnect').addEventListener('click', async () => {
+    const btn = document.getElementById('drive-reconnect');
+    btn.disabled = true;
+    btn.textContent = 'Conectando…';
+    try {
+      await auth.signOut();
+      clearDriveToken();
+      const provider = new firebase.auth.GoogleAuthProvider();
+      provider.addScope(DRIVE_SCOPE);
+      const result = await auth.signInWithPopup(provider);
+      const cred = firebase.auth.GoogleAuthProvider.credentialFromResult(result) || (result && result.credential);
+      if (cred && cred.accessToken) {
+        storeDriveToken(cred.accessToken);
+        toast('Drive reconectado ✓');
+      } else {
+        toast('Google no devolvió permiso de Drive. Revisa el consentimiento OAuth.');
+      }
+    } catch (e) {
+      toast('No se pudo reconectar: ' + (e.code || e.message));
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🔌 Reconectar Drive';
+      paintDriveState();
+    }
   });
 
   auth.onAuthStateChanged(user => {
