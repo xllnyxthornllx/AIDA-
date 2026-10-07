@@ -86,28 +86,60 @@ function renderTeam() {
   setTimeout(() => document.querySelectorAll('.team-card').forEach(el => el.classList.add('visible')), 100);
 }
 
+// ===== EVIDENCIAS: Drive / URLs / archivos =====
+function driveId(url) {
+  if (!url) return null;
+  const m = url.match(/\/d\/([a-zA-Z0-9_-]+)|[?&]id=([a-zA-Z0-9_-]+)/);
+  return m ? (m[1] || m[2]) : null;
+}
+
+function evidenceMedia(e) {
+  const raw = (e.img || '').trim();
+  const id = driveId(raw);
+  if (id) {
+    return {
+      kind: 'drive-image',
+      thumb: 'https://drive.google.com/thumbnail?id=' + id + '&sz=w800',
+      full: 'https://drive.google.com/thumbnail?id=' + id + '&sz=w1600',
+      link: 'https://drive.google.com/file/d/' + id + '/view'
+    };
+  }
+  if (/\.(png|jpe?g|gif|webp|svg|bmp)(\?.*)?$/i.test(raw) || raw.startsWith('assets/') || raw.startsWith('data:image')) {
+    return { kind: 'image', thumb: raw, full: raw, link: raw };
+  }
+  if (/^(https?:|blob:)/i.test(raw)) {
+    return { kind: 'doc', thumb: null, full: null, link: raw };
+  }
+  return { kind: 'image', thumb: raw, full: raw, link: raw };
+}
+
 function renderEvidences() {
   const grid = document.getElementById('evidence-grid');
-  grid.innerHTML = EVIDENCES.map((e, i) => `
-    <div class="evidence-card" data-full="${e.img}" style="animation-delay:${i*0.07}s">
-      <img class="evidence-thumb" src="${e.img}" alt="${e.title}" loading="lazy" onerror="this.style.display='none'>
-      <div class="evidence-body"><h4>${e.title}</h4><p>${e.desc}</p><span class="evidence-tag">#${e.tag}</span></div>
-    </div>`).join('');
+  grid.innerHTML = EVIDENCES.map((e0, i) => { const e = Object.assign({}, e0, evidenceMedia(e0)); return `
+    <div class="evidence-card" data-full="${e.full || ''}" data-link="${e.link || ''}" style="animation-delay:${i*0.07}s">
+      ${e.kind === 'doc' ? `<a class="evidence-doc" href="${e.link}" target="_blank" rel="noopener"><span class="doc-icon">DOC</span><span>Abrir documento</span></a>` : `<img class="evidence-thumb" src="${e.thumb}" alt="${e.title}" loading="lazy" onerror="this.closest('.evidence-card').querySelector('.evidence-fallback').style.display='flex';this.remove()">`}
+      <div class="evidence-fallback" style="display:none"><a href="${e.link}" target="_blank" rel="noopener">Ver archivo</a></div>
+      <div class="evidence-body"><h4>${e.title}</h4><p>${e.desc}</p><span class="evidence-tag">#${e.tag}</span>${e.by ? `<small class="evidence-by">· ${e.by.split('@')[0]}</small>` : ''}</div>
+    </div>`; }).join('');
   document.querySelectorAll('.evidence-card').forEach(card => {
-    card.addEventListener('click', e => {
-      e.stopPropagation();
-      const img = card.getAttribute('data-full');
-      if (!img) return;
-      let lb = document.getElementById('lightbox');
-      if (!lb) {
-        lb = document.createElement('div'); lb.id = 'lightbox'; lb.className = 'lightbox';
-        lb.innerHTML = `<span class="lightbox-close">&times;</span><img src="" alt>`;
-        document.body.appendChild(lb);
-        lb.querySelector('.lightbox-close').addEventListener('click', () => lb.classList.remove('open'));
-        lb.addEventListener('click', ev => { if (ev.target === lb) lb.classList.remove('open'); });
+    card.addEventListener('click', ev => {
+      if (ev.target.closest('a')) return;
+      const full = card.getAttribute('data-full');
+      const link = card.getAttribute('data-link');
+      if (full) {
+        let lb = document.getElementById('lightbox');
+        if (!lb) {
+          lb = document.createElement('div'); lb.id = 'lightbox'; lb.className = 'lightbox';
+          lb.innerHTML = `<span class="lightbox-close">&times;</span><img src="" alt>`;
+          document.body.appendChild(lb);
+          lb.querySelector('.lightbox-close').addEventListener('click', () => lb.classList.remove('open'));
+          lb.addEventListener('click', e2 => { if (e2.target === lb) lb.classList.remove('open'); });
+        }
+        lb.querySelector('img').src = full;
+        lb.classList.add('open');
+      } else if (link) {
+        window.open(link, '_blank', 'noopener');
       }
-      lb.querySelector('img').src = img;
-      lb.classList.add('open');
     });
   });
 }

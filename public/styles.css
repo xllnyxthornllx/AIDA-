@@ -238,6 +238,12 @@ body {
 .evidence-body h4 { font-size:15px; margin-bottom:6px; }
 .evidence-body p { color:var(--muted); font-size:13px; margin-bottom:10px; }
 .evidence-tag { font-size:11px; color:var(--cyan); font-family:'JetBrains Mono',monospace; background:var(--cyan-soft); padding:2px 8px; border-radius:6px; }
+.evidence-by { font-size:11px; color:var(--muted); margin-left:6px; }
+.evidence-doc { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; min-height:170px; background:linear-gradient(140deg,#141a26,#0d1420); color:var(--text); text-decoration:none; font-weight:600; font-size:14px; transition:.2s; }
+.evidence-doc:hover { color:var(--cyan); }
+.doc-icon { font-size:38px; }
+.evidence-fallback { align-items:center; justify-content:center; gap:8px; min-height:120px; background:#141a26; }
+.evidence-fallback a { color:var(--cyan); font-weight:600; }
 
 /* ===== TEAM ===== */
 .team-grid { 

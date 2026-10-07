@@ -195,13 +195,13 @@
     <div class="modal-box">
       <button class="modal-close" id="evidence-close" aria-label="Cerrar">&times;</button>
       <h3 id="evidence-title">Subir evidencia</h3>
-      <p class="modal-sub">Se guarda en Firebase y aparece al instante.</p>
+      <p class="modal-sub">Pega un link de Drive, una URL de imagen o documento. Se guarda y aparece al instante.</p>
       <form id="evidence-form">
         <input type="text" id="ev-title" placeholder="Título (ej. Prueba OLED)" required>
         <input type="text" id="ev-desc" placeholder="Descripción">
         <input type="text" id="ev-tag" placeholder="Etiqueta (Hardware / Docs / Diseño)" list="tags">
         <datalist id="tags"><option>Hardware</option><option>Docs</option><option>Diseño</option><option>Redes</option><option>IA</option><option>Pruebas</option></datalist>
-        <input type="text" id="ev-img" placeholder="URL imagen o assets/images/...">
+        <input type="text" id="ev-img" placeholder="Link Drive / URL imagen / PDF…">
         <button type="submit" id="ev-save" class="btn-primary">Guardar</button>
       </form>
     </div>
