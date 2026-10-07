@@ -497,48 +497,45 @@ function uploadToDrive(file, onProgress) {
   return new Promise((resolve, reject) => {
     const token = driveToken();
     if (!token) { reject(new Error('Sin token de Drive. Entra con "Continuar con Google".')); return; }
+    console.info('[Drive] subiendo:', file.name, Math.round(file.size / 1024) + ' KB');
+    // FormData = streaming desde disco, sin duplicar el archivo en memoria (no tumba la pestaña)
     const meta = { name: Date.now() + '_' + file.name, parents: [DRIVE_FOLDER_ID] };
-    const boundary = '-------aida' + Date.now();
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64 = reader.result.split(',')[1];
-      const body =
-        '--' + boundary + '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n' +
-        JSON.stringify(meta) +
-        '\r\n--' + boundary + '\r\nContent-Type: ' + (file.type || 'application/octet-stream') + '\r\nContent-Transfer-Encoding: base64\r\n\r\n' +
-        base64 + '\r\n--' + boundary + '--';
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink,thumbnailLink,mimeType');
-      xhr.setRequestHeader('Authorization', 'Bearer ' + token);
-      xhr.setRequestHeader('Content-Type', 'multipart/related; boundary=' + boundary);
-      xhr.upload.onprogress = ev => { if (ev.lengthComputable && onProgress) onProgress(Math.round(ev.loaded / ev.total * 100)); };
-      xhr.onload = () => {
-        if (xhr.status < 300) {
-          const f = JSON.parse(xhr.responseText);
-          // Hacer público con link para que la miniatura/galería funcione
-          const xp = new XMLHttpRequest();
-          xp.open('POST', 'https://www.googleapis.com/drive/v3/files/' + f.id + '/permissions');
-          xp.setRequestHeader('Authorization', 'Bearer ' + token);
-          xp.setRequestHeader('Content-Type', 'application/json');
-          xp.onload = () => resolve(f);
-          xp.onerror = () => resolve(f);
-          xp.send(JSON.stringify({ role: 'reader', type: 'anyone' }));
-        } else if (xhr.status === 401 || xhr.status === 403) {
-          clearDriveToken();
-          paintDriveState();
-          reject(new Error('Permiso de Drive vencido. Cierra sesión y entra de nuevo con Google.'));
-        } else {
-          let detail = '';
-          try { const j = JSON.parse(xhr.responseText); if (j && j.error) detail = ': ' + (j.error.message || j.error.status); } catch (e) {}
-          console.error('[Drive] subida falló', xhr.status, xhr.responseText);
-          reject(new Error('Drive respondió ' + xhr.status + detail));
-        }
-      };
-      xhr.onerror = () => reject(new Error('Error de red subiendo a Drive'));
-      xhr.send(body);
+    const form = new FormData();
+    form.append('metadata', new Blob([JSON.stringify(meta)], { type: 'application/json' }));
+    form.append('file', file);
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink,thumbnailLink,mimeType');
+    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+    xhr.upload.onprogress = ev => { if (ev.lengthComputable && onProgress) onProgress(Math.round(ev.loaded / ev.total * 100)); };
+    xhr.onload = () => {
+      if (xhr.status < 300) {
+        let f;
+        try { f = JSON.parse(xhr.responseText); } catch (e) { reject(new Error('Respuesta inválida de Drive')); return; }
+        console.info('[Drive] archivo creado:', f.id);
+        // Hacer público con link para que la miniatura/galería funcione
+        const xp = new XMLHttpRequest();
+        xp.open('POST', 'https://www.googleapis.com/drive/v3/files/' + f.id + '/permissions');
+        xp.setRequestHeader('Authorization', 'Bearer ' + token);
+        xp.setRequestHeader('Content-Type', 'application/json');
+        xp.onload = () => resolve(f);
+        xp.onerror = () => resolve(f);
+        xp.send(JSON.stringify({ role: 'reader', type: 'anyone' }));
+      } else if (xhr.status === 401 || xhr.status === 403) {
+        clearDriveToken();
+        paintDriveState();
+        let detail = '';
+        try { const j = JSON.parse(xhr.responseText); if (j && j.error) detail = ': ' + (j.error.message || j.error.status); } catch (e) {}
+        console.error('[Drive] 401/403:', xhr.responseText);
+        reject(new Error('Drive rechazó la subida (' + xhr.status + detail + '). Reconecta Drive.'));
+      } else {
+        let detail = '';
+        try { const j = JSON.parse(xhr.responseText); if (j && j.error) detail = ': ' + (j.error.message || j.error.status); } catch (e) {}
+        console.error('[Drive] subida falló', xhr.status, xhr.responseText);
+        reject(new Error('Drive respondió ' + xhr.status + detail));
+      }
     };
-    reader.onerror = () => reject(new Error('No se pudo leer el archivo'));
-    reader.readAsDataURL(file);
+    xhr.onerror = () => { console.error('[Drive] error de red'); reject(new Error('Error de red subiendo a Drive')); };
+    xhr.send(form);
   });
 }
 
@@ -597,13 +594,21 @@ function initAuth() {
     saveBtn.textContent = 'Guardando…';
     await undeleteTitle(ev.title);
     const done = ok => {
-      saveBtn.disabled = false;
-      saveBtn.textContent = 'Guardar';
-      driveStatus(null);
-      if (!ok) return;
-      closeModal('evidence-modal');
-      document.getElementById('evidence-form').reset();
+      if (!ok) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Guardar';
+        return;
+      }
+      // Confirmación visible DENTRO del modal (no solo toast): se queda 1.5s antes de cerrar
+      driveStatus('✓ Evidencia guardada en Drive y en la galería', 100);
       toast('Evidencia guardada');
+      setTimeout(() => {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Guardar';
+        driveStatus(null);
+        closeModal('evidence-modal');
+        document.getElementById('evidence-form').reset();
+      }, 1500);
     };
     if (file) {
       if (!driveToken()) {
