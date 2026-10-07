@@ -141,6 +141,8 @@ function driveId(url) {
 
 function evidenceMedia(e) {
   const raw = (e.img || '').trim();
+  const fm = raw.match(/\/drive\/folders\/([a-zA-Z0-9_-]+)/);
+  if (fm) return { kind: 'doc', thumb: null, full: null, link: raw, label: 'Abrir carpeta en Drive', icon: 'FOLDER' };
   const id = driveId(raw);
   if (id) {
     return {
@@ -163,7 +165,7 @@ function renderEvidences() {
   const grid = document.getElementById('evidence-grid');
   grid.innerHTML = EVIDENCES.map((e0, i) => { const e = Object.assign({}, e0, evidenceMedia(e0)); return `
     <div class="evidence-card" data-full="${e.full || ''}" data-link="${e.link || ''}" style="animation-delay:${i*0.07}s">
-      ${e.kind === 'doc' ? `<a class="evidence-doc" href="${e.link}" target="_blank" rel="noopener"><span class="doc-icon">DOC</span><span>Abrir documento</span></a>` : `<img class="evidence-thumb" src="${e.thumb}" alt="${e.title}" loading="lazy" onerror="this.closest('.evidence-card').querySelector('.evidence-fallback').style.display='flex';this.remove()">`}
+      ${e.kind === 'doc' ? `<a class="evidence-doc" href="${e.link}" target="_blank" rel="noopener"><span class="doc-icon">DOC</span><span>${m.label || 'Abrir documento'}</span></a>` : `<img class="evidence-thumb" src="${e.thumb}" alt="${e.title}" loading="lazy" onerror="this.closest('.evidence-card').querySelector('.evidence-fallback').style.display='flex';this.remove()">`}
       <div class="evidence-fallback" style="display:none"><a href="${e.link}" target="_blank" rel="noopener">Ver archivo</a></div>
       <div class="evidence-body"><h4>${e.title}</h4><p>${e.desc}</p><span class="evidence-tag">#${e.tag}</span>${e.by ? `<small class="evidence-by">· ${e.by.split('@')[0]}</small>` : ''}</div>
     </div>`; }).join('');
@@ -453,11 +455,23 @@ function initAuth() {
       by: currentUser.email, at: Date.now()
     };
     if (!ev.title) { toast('Pon un título'); return; }
-    if (db) db.ref('evidences').push(ev);
-    else { EVIDENCES.push(ev); renderEvidences(); }
-    closeModal('evidence-modal');
-    document.getElementById('evidence-form').reset();
-    toast('Evidencia guardada');
+    const saveBtn = document.getElementById('ev-save');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Guardando…';
+    const done = ok => {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Guardar';
+      if (!ok) return;
+      closeModal('evidence-modal');
+      document.getElementById('evidence-form').reset();
+      toast('Evidencia guardada');
+    };
+    if (db) {
+      db.ref('evidences').push(ev, err => {
+        if (err) { done(false); toast('Error al guardar: ' + err.message); }
+        else done(true);
+      });
+    } else { EVIDENCES.push(ev); renderEvidences(); done(true); }
   });
 
   // FIREBASE INIT - simplified, no Chart dependencies.
