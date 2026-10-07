@@ -87,14 +87,18 @@ async function undeleteTitle(title) {
   DELETED_TITLES.delete(title);
   if (!db || !title) return;
   try {
-    const s = await db.ref('deletedEvidences').once('value');
+    // Con timeout: si la lectura se cuelga, no debe congelar el guardado
+    const s = await Promise.race([
+      db.ref('deletedEvidences').once('value'),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 4000))
+    ]);
     const val = s.val();
     if (!val) return;
     for (const [k, v] of Object.entries(val)) {
       if (v && v.title === title) await db.ref('deletedEvidences/' + k).remove();
     }
     console.info('[Evidence] título resucitado:', title);
-  } catch (e) { console.warn('[Evidence] undelete:', e.message); }
+  } catch (e) { console.warn('[Evidence] undelete (continúo igual):', e.message); }
 }
 
 // ===== TOAST =====
@@ -587,6 +591,7 @@ function initAuth() {
       by: currentUser.email, at: Date.now()
     };
     if (!ev.title) { toast('Pon un título'); return; }
+    console.info('[Evidence] submit:', ev.title, file ? ('archivo ' + file.name + ' ' + Math.round(file.size / 1024) + 'KB') : 'solo link');
     const saveBtn = document.getElementById('ev-save');
     const fileInput = document.getElementById('ev-file');
     const file = fileInput && fileInput.files && fileInput.files[0];
@@ -625,6 +630,7 @@ function initAuth() {
         saveBtn.textContent = 'Subiendo a Drive…';
         driveStatus('Subiendo a Drive… 0%', 0);
         const f = await uploadToDrive(file, p => driveStatus('Subiendo a Drive… ' + p + '%', p));
+        console.info('[Evidence] Drive ok, guardando en RTDB…');
         ev.driveFileId = f.id;
         ev.driveLink = f.webViewLink;
         ev.img = f.thumbnailLink || f.webViewLink;
@@ -634,6 +640,7 @@ function initAuth() {
       } catch (errU) {
         saveBtn.disabled = false; saveBtn.textContent = 'Guardar';
         driveStatus(null);
+        console.error('[Evidence] fallo:', errU.message);
         toast('Error Drive: ' + errU.message);
       }
       return;
