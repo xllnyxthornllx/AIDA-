@@ -81,6 +81,22 @@ function deleteEvidence(card) {
   toast('Evidencia eliminada');
 }
 
+// Si se guarda una evidencia con un título previamente eliminado, se "resucita":
+// sin esto, la tarjeta aparece un instante y desaparece al llegar el snapshot de borrados.
+async function undeleteTitle(title) {
+  DELETED_TITLES.delete(title);
+  if (!db || !title) return;
+  try {
+    const s = await db.ref('deletedEvidences').once('value');
+    const val = s.val();
+    if (!val) return;
+    for (const [k, v] of Object.entries(val)) {
+      if (v && v.title === title) await db.ref('deletedEvidences/' + k).remove();
+    }
+    console.info('[Evidence] título resucitado:', title);
+  } catch (e) { console.warn('[Evidence] undelete:', e.message); }
+}
+
 // ===== TOAST =====
 function toast(msg) {
   const c = document.getElementById('toast-container');
@@ -527,10 +543,11 @@ function uploadToDrive(file, onProgress) {
 }
 
 function saveEvidence(ev, saveBtn, done) {
+  console.info('[Evidence] guardando:', ev.title);
   if (db) {
     db.ref('evidences').push(ev, err => {
-      if (err) { done(false); toast('Error al guardar: ' + err.message); }
-      else done(true);
+      if (err) { console.error('[Evidence] push falló:', err.message); done(false); toast('Error al guardar: ' + err.message); }
+      else { console.info('[Evidence] push ok:', ev.title); done(true); }
     });
   } else { EVIDENCES.push(ev); renderEvidences(); done(true); }
 }
@@ -578,6 +595,7 @@ function initAuth() {
     const file = fileInput && fileInput.files && fileInput.files[0];
     saveBtn.disabled = true;
     saveBtn.textContent = 'Guardando…';
+    await undeleteTitle(ev.title);
     const done = ok => {
       saveBtn.disabled = false;
       saveBtn.textContent = 'Guardar';
