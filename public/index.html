@@ -209,20 +209,11 @@
     </div>
   </div>
 
-  <!-- Firebase and App Scripts -->
+  <!-- Limpieza: desregistra ServiceWorkers viejos que bloqueaban la carga en Vercel -->
   <script>
-    // Register service worker carefully - only if supported
     if ('serviceWorker' in navigator) {
-      try {
-        navigator.serviceWorker.register('sw.js', { scope: './' }).then(registration => {
-          console.log('SW registered with scope: ', registration.scope);
-        }).catch(err => {
-          console.warn('SW registration failed:', err.message);
-          // Don't crash the app if SW fails
-        });
-      } catch (e) {
-        console.warn('SW not supported or error:', e.message);
-      }
+      navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister()));
+      if (window.caches) caches.keys().then(ks => ks.forEach(k => caches.delete(k)));
     }
   </script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>

@@ -112,6 +112,139 @@ function renderEvidences() {
   });
 }
 
+// ===== KANBAN DnD + FILTROS =====
+function initDnD() {
+  document.querySelectorAll('.kanban-card').forEach(card => {
+    if (!currentUser) return;
+    card.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', card.dataset.taskId); card.style.opacity = '.5'; });
+    card.addEventListener('dragend', () => { card.style.opacity = '1'; });
+    card.addEventListener('click', () => openTaskModal(card.dataset.taskId));
+  });
+  document.querySelectorAll('.kanban-cards').forEach(col => {
+    col.addEventListener('dragover', e => { if (!currentUser) return; e.preventDefault(); col.style.background = 'rgba(0,255,255,.05)'; });
+    col.addEventListener('dragleave', () => { col.style.background = ''; });
+    col.addEventListener('drop', e => {
+      if (!currentUser) return;
+      e.preventDefault(); col.style.background = '';
+      const taskId = e.dataTransfer.getData('text/plain');
+      const newCol = col.id.replace('col-', '');
+      const task = KANBAN_TASKS.find(t => t.id === taskId);
+      if (task && task.col !== newCol) {
+        task.col = newCol;
+        if (db && currentUser) db.ref('tasks/' + taskId).set(task);
+        renderKanban(); toast(taskId + ' movida');
+      }
+    });
+  });
+}
+
+function kanbanMatches(t) {
+  const q = (document.getElementById('kanban-search').value || '').toLowerCase();
+  const f = document.getElementById('kanban-filter').value || '';
+  if (f && t.assignee !== f) return false;
+  if (q && !(t.id + ' ' + t.title + ' ' + t.assignee).toLowerCase().includes(q)) return false;
+  return true;
+}
+
+function updateKanbanFilterUI() {
+  const sel = document.getElementById('kanban-filter');
+  if (sel && sel.options.length <= 1) {
+    [...new Set(KANBAN_TASKS.map(t => t.assignee))].sort().forEach(a => {
+      const o = document.createElement('option'); o.value = a; o.textContent = a; sel.appendChild(o);
+    });
+  }
+  let visible = 0;
+  document.querySelectorAll('.kanban-card').forEach(card => {
+    const t = KANBAN_TASKS.find(x => x.id === card.dataset.taskId);
+    const show = t ? kanbanMatches(t) : true;
+    card.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+  const empty = document.getElementById('kanban-empty');
+  if (empty) empty.classList.toggle('hidden', visible > 0);
+}
+
+function initKanbanTools() {
+  const s = document.getElementById('kanban-search');
+  const f = document.getElementById('kanban-filter');
+  if (s) s.addEventListener('input', updateKanbanFilterUI);
+  if (f) f.addEventListener('change', updateKanbanFilterUI);
+  const ex = document.getElementById('export-kanban');
+  if (ex) ex.addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(KANBAN_TASKS, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'kanban-aida.json'; a.click();
+    URL.revokeObjectURL(a.href); toast('Kanban exportado');
+  });
+}
+
+// ===== TASK MODAL (editar / eliminar, solo logueados) =====
+function openTaskModal(taskId) {
+  if (!requireAuth()) return;
+  const t = KANBAN_TASKS.find(x => x.id === taskId);
+  if (!t) return;
+  document.getElementById('task-id').value = t.id;
+  document.getElementById('task-title-input').value = t.title;
+  const selA = document.getElementById('task-assignee');
+  selA.innerHTML = TEAM.map(m => `<option value="${m.short}"${m.short === t.assignee ? ' selected' : ''}>${m.short}</option>`).join('');
+  document.getElementById('task-col').value = t.col;
+  document.getElementById('task-modal').classList.add('open');
+}
+
+function initTaskModal() {
+  const modal = document.getElementById('task-modal');
+  if (!modal) return;
+  document.getElementById('task-close').addEventListener('click', () => modal.classList.remove('open'));
+  modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
+  document.getElementById('task-form').addEventListener('submit', e => {
+    e.preventDefault();
+    if (!requireAuth()) return;
+    const id = document.getElementById('task-id').value;
+    const t = KANBAN_TASKS.find(x => x.id === id);
+    if (!t) return;
+    t.title = document.getElementById('task-title-input').value.trim() || t.title;
+    t.assignee = document.getElementById('task-assignee').value;
+    t.col = document.getElementById('task-col').value;
+    if (db) db.ref('tasks/' + id).set(t);
+    modal.classList.remove('open'); renderKanban(); toast(id + ' actualizada');
+  });
+  document.getElementById('task-delete').addEventListener('click', () => {
+    if (!requireAuth()) return;
+    const id = document.getElementById('task-id').value;
+    KANBAN_TASKS = KANBAN_TASKS.filter(x => x.id !== id);
+    if (db) db.ref('tasks/' + id).remove();
+    modal.classList.remove('open'); renderKanban(); toast(id + ' eliminada');
+  });
+}
+
+// ===== EVIDENCE TOOLS (buscar / filtrar / vista) =====
+function initEvidenceTools() {
+  const s = document.getElementById('evidence-search');
+  const f = document.getElementById('evidence-filter');
+  const grid = document.getElementById('evidence-grid');
+  const apply = () => {
+    const q = (s.value || '').toLowerCase();
+    const tag = f.value || '';
+    if (f.options.length <= 1) {
+      [...new Set(EVIDENCES.map(e => e.tag))].sort().forEach(t => {
+        const o = document.createElement('option'); o.value = t; o.textContent = t; f.appendChild(o);
+      });
+    }
+    document.querySelectorAll('.evidence-card').forEach(card => {
+      const title = card.querySelector('h4').textContent.toLowerCase();
+      const tg = (card.querySelector('.evidence-tag').textContent || '').replace('#', '');
+      const show = (!tag || tg === tag) && (!q || title.includes(q));
+      card.style.display = show ? '' : 'none';
+    });
+  };
+  if (s) s.addEventListener('input', apply);
+  if (f) f.addEventListener('change', apply);
+  const gv = document.getElementById('evidence-grid-view');
+  const lv = document.getElementById('evidence-list-view');
+  if (gv) gv.addEventListener('click', () => { grid.style.gridTemplateColumns = ''; gv.setAttribute('aria-pressed', 'true'); lv.setAttribute('aria-pressed', 'false'); });
+  if (lv) lv.addEventListener('click', () => { grid.style.gridTemplateColumns = '1fr'; lv.setAttribute('aria-pressed', 'true'); gv.setAttribute('aria-pressed', 'false'); });
+}
+
 // ===== PROGRESS =====
 function setProgressUI(val) {
   const fill = document.querySelector('.progress-fill');
@@ -193,12 +326,15 @@ function initAuth() {
     toast('Evidencia guardada');
   });
 
-  // FIREBASE INIT - simplified, no Chart dependencies
+  // FIREBASE INIT - simplified, no Chart dependencies.
+  // Guard anti-duplicado: firebase-config.js ya NO inicializa.
   if (typeof FIREBASE_ENABLED === 'undefined' || !FIREBASE_ENABLED || typeof firebase === 'undefined') {
     updateAuthUI(); return;
   }
 
-  firebase.initializeApp(firebaseConfig);
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  } catch (e) { console.warn('Firebase init:', e.message); updateAuthUI(); return; }
   auth = firebase.auth(); db = firebase.database();
 
   // Google Popup Login - no redirect, works on Vercel
@@ -350,5 +486,5 @@ function initEffects() {
 document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal.open,.lightbox.open').forEach(m => m.classList.remove('open')); });
 
 document.addEventListener('DOMContentLoaded', () => {
-  renderGantt(); renderKanban(); renderTeam(); renderEvidences(); initProgress(); initAuth(); updateAuthUI(); initEffects();
+  renderGantt(); renderKanban(); renderTeam(); renderEvidences(); initProgress(); initAuth(); updateAuthUI(); initEffects(); initKanbanTools(); initTaskModal(); initEvidenceTools();
 });
