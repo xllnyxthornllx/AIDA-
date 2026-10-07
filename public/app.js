@@ -31,6 +31,9 @@ let EVIDENCES = [
 ];
 
 let currentUser = null, db = null, auth = null, theme = 'dark';
+const DRIVE_FOLDER_ID = '1NqH5rjOn1dDncJL-DzJPYLOADD9VcEEx';
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+let driveAccessToken = null;
 const BASE_EVIDENCES = EVIDENCES.map(e => Object.assign({}, e));
 let REMOTE_EVIDENCES = [];
 let DELETED_TITLES = new Set();
@@ -418,6 +421,79 @@ function updateAuthUI() {
   renderEvidences();
 }
 
+// ===== GOOGLE DRIVE UPLOAD (Drive API v3, carpeta del equipo) =====
+function driveToken() {
+  if (driveAccessToken) return driveAccessToken;
+  try { driveAccessToken = sessionStorage.getItem('drive_token'); } catch (e) {}
+  return driveAccessToken;
+}
+
+function driveStatus(msg, pct) {
+  const st = document.getElementById('drive-status');
+  if (!st) return;
+  st.hidden = !msg;
+  if (!msg) return;
+  const bar = st.querySelector('.drive-bar > i');
+  const txt = st.querySelector('span');
+  if (bar) bar.style.width = (pct || 0) + '%';
+  if (txt) txt.textContent = msg;
+}
+
+function uploadToDrive(file, onProgress) {
+  return new Promise((resolve, reject) => {
+    const token = driveToken();
+    if (!token) { reject(new Error('Sin token de Drive. Entra con "Continuar con Google".')); return; }
+    const meta = { name: Date.now() + '_' + file.name, parents: [DRIVE_FOLDER_ID] };
+    const boundary = '-------aida' + Date.now();
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result.split(',')[1];
+      const body =
+        '--' + boundary + '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n' +
+        JSON.stringify(meta) +
+        '\r\n--' + boundary + '\r\nContent-Type: ' + (file.type || 'application/octet-stream') + '\r\nContent-Transfer-Encoding: base64\r\n\r\n' +
+        base64 + '\r\n--' + boundary + '--';
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink,thumbnailLink,mimeType');
+      xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+      xhr.setRequestHeader('Content-Type', 'multipart/related; boundary=' + boundary);
+      xhr.upload.onprogress = ev => { if (ev.lengthComputable && onProgress) onProgress(Math.round(ev.loaded / ev.total * 100)); };
+      xhr.onload = () => {
+        if (xhr.status < 300) {
+          const f = JSON.parse(xhr.responseText);
+          // Hacer público con link para que la miniatura/galería funcione
+          const xp = new XMLHttpRequest();
+          xp.open('POST', 'https://www.googleapis.com/drive/v3/files/' + f.id + '/permissions');
+          xp.setRequestHeader('Authorization', 'Bearer ' + token);
+          xp.setRequestHeader('Content-Type', 'application/json');
+          xp.onload = () => resolve(f);
+          xp.onerror = () => resolve(f);
+          xp.send(JSON.stringify({ role: 'reader', type: 'anyone' }));
+        } else if (xhr.status === 401 || xhr.status === 403) {
+          try { sessionStorage.removeItem('drive_token'); } catch (e) {}
+          driveAccessToken = null;
+          reject(new Error('Permiso de Drive vencido. Cierra sesión y entra de nuevo con Google.'));
+        } else {
+          reject(new Error('Drive respondió ' + xhr.status));
+        }
+      };
+      xhr.onerror = () => reject(new Error('Error de red subiendo a Drive'));
+      xhr.send(body);
+    };
+    reader.onerror = () => reject(new Error('No se pudo leer el archivo'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function saveEvidence(ev, saveBtn, done) {
+  if (db) {
+    db.ref('evidences').push(ev, err => {
+      if (err) { done(false); toast('Error al guardar: ' + err.message); }
+      else done(true);
+    });
+  } else { EVIDENCES.push(ev); renderEvidences(); done(true); }
+}
+
 function initAuth() {
   const modal = document.getElementById('auth-modal');
   const authBtn = document.getElementById('auth-btn');
@@ -444,7 +520,7 @@ function initAuth() {
     p.type = show ? 'text' : 'password';
     document.getElementById('pass-toggle').textContent = show ? '🙈' : '👁';
   });
-  document.getElementById('evidence-form').addEventListener('submit', e => {
+  document.getElementById('evidence-form').addEventListener('submit', async e => {
     e.preventDefault();
     if (!requireAuth()) return;
     const ev = {
@@ -456,22 +532,48 @@ function initAuth() {
     };
     if (!ev.title) { toast('Pon un título'); return; }
     const saveBtn = document.getElementById('ev-save');
+    const fileInput = document.getElementById('ev-file');
+    const file = fileInput && fileInput.files && fileInput.files[0];
     saveBtn.disabled = true;
     saveBtn.textContent = 'Guardando…';
     const done = ok => {
       saveBtn.disabled = false;
       saveBtn.textContent = 'Guardar';
+      driveStatus(null);
       if (!ok) return;
       closeModal('evidence-modal');
       document.getElementById('evidence-form').reset();
       toast('Evidencia guardada');
     };
-    if (db) {
-      db.ref('evidences').push(ev, err => {
-        if (err) { done(false); toast('Error al guardar: ' + err.message); }
-        else done(true);
-      });
-    } else { EVIDENCES.push(ev); renderEvidences(); done(true); }
+    if (file) {
+      if (!driveToken()) {
+        saveBtn.disabled = false; saveBtn.textContent = 'Guardar';
+        toast('Para subir archivos entra con "Continuar con Google" (da permiso de Drive).');
+        return;
+      }
+      if (file.size > 25 * 1024 * 1024) {
+        saveBtn.disabled = false; saveBtn.textContent = 'Guardar';
+        toast('Archivo muy grande (máx 25 MB).');
+        return;
+      }
+      try {
+        saveBtn.textContent = 'Subiendo a Drive…';
+        driveStatus('Subiendo a Drive… 0%', 0);
+        const f = await uploadToDrive(file, p => driveStatus('Subiendo a Drive… ' + p + '%', p));
+        ev.driveFileId = f.id;
+        ev.driveLink = f.webViewLink;
+        ev.img = f.thumbnailLink || f.webViewLink;
+        ev.fileName = file.name;
+        driveStatus('Guardando…', 100);
+        saveEvidence(ev, saveBtn, done);
+      } catch (errU) {
+        saveBtn.disabled = false; saveBtn.textContent = 'Guardar';
+        driveStatus(null);
+        toast('Error Drive: ' + errU.message);
+      }
+      return;
+    }
+    saveEvidence(ev, saveBtn, done);
   });
 
   // FIREBASE INIT - simplified, no Chart dependencies.
@@ -505,12 +607,20 @@ function initAuth() {
 
   // Login con Google: solo popup. Si el navegador lo bloquea, se guía al
   // login con correo (el redirect falla en Firefox con storage particionado).
+  // Se pide scope drive.file para subir evidencias al Drive del equipo.
   let googleBusy = false;
   document.getElementById('auth-google').addEventListener('click', async () => {
     if (googleBusy) return;
     googleBusy = true; setLoading(true);
     try {
-      await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+      const provider = new firebase.auth.GoogleAuthProvider();
+      provider.addScope(DRIVE_SCOPE);
+      const result = await auth.signInWithPopup(provider);
+      const cred = firebase.auth.GoogleAuthProvider.credentialFromResult(result);
+      if (cred && cred.accessToken) {
+        driveAccessToken = cred.accessToken;
+        try { sessionStorage.setItem('drive_token', driveAccessToken); } catch (e) {}
+      }
       closeModal(modal);
       toast('Sesión iniciada con Google');
     } catch (e2) {
@@ -525,6 +635,8 @@ function initAuth() {
 
   document.getElementById('auth-logout').addEventListener('click', async () => {
     await auth.signOut();
+    driveAccessToken = null;
+    try { sessionStorage.removeItem('drive_token'); } catch (e) {}
     closeModal(modal);
     toast('Sesión cerrada');
   });

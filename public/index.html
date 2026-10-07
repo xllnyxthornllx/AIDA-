@@ -6,7 +6,7 @@
   <title>AIDA+ | Hito N° 2 — Seguimiento Oficial</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
-  <link rel="stylesheet" href="styles.css?v=6">
+  <link rel="stylesheet" href="styles.css?v=7">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -155,7 +155,7 @@
   <footer role="contentinfo">
     <div class="container footer-inner">
       <p><strong>AIDA+</strong> — Tecsup Arequipa · Implementación de Tecnologías Emergentes</p>
-      <p>Docente auditor: <code>rllerenad@tecsup.edu.pe</code> · © 2026 · <span id="app-version">v6</span></p>
+      <p>Docente auditor: <code>rllerenad@tecsup.edu.pe</code> · © 2026 · <span id="app-version">v7</span></p>
     </div>
   </footer>
 
@@ -195,13 +195,16 @@
     <div class="modal-box">
       <button class="modal-close" id="evidence-close" aria-label="Cerrar">&times;</button>
       <h3 id="evidence-title">Subir evidencia</h3>
-      <p class="modal-sub">Pega un link de Drive, una URL de imagen o documento. Se guarda y aparece al instante.</p>
+      <p class="modal-sub">Sube un archivo a la carpeta Drive del equipo o pega un link. Se guarda y aparece al instante.</p>
       <form id="evidence-form">
         <input type="text" id="ev-title" placeholder="Título (ej. Prueba OLED)" required>
         <input type="text" id="ev-desc" placeholder="Descripción">
         <input type="text" id="ev-tag" placeholder="Etiqueta (Hardware / Docs / Diseño)" list="tags">
         <datalist id="tags"><option>Hardware</option><option>Docs</option><option>Diseño</option><option>Redes</option><option>IA</option><option>Pruebas</option></datalist>
-        <input type="text" id="ev-img" placeholder="Link Drive / URL imagen / PDF…">
+        <label class="drive-file-label" for="ev-file">📎 Subir archivo a Drive <small>(foto, PDF, doc — máx 25 MB · requiere entrar con Google)</small></label>
+        <input type="file" id="ev-file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.mp4">
+        <div id="drive-status" class="drive-status" hidden><div class="drive-bar"><i></i></div><span></span></div>
+        <input type="text" id="ev-img" placeholder="…o pega un Link Drive / URL imagen / PDF">
         <button type="submit" id="ev-save" class="btn-primary">Guardar</button>
       </form>
     </div>
@@ -232,7 +235,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-  <script src="firebase-config.js?v=6" defer></script>
-  <script src="app.js?v=6" defer></script>
+  <script src="firebase-config.js?v=7" defer></script>
+  <script src="app.js?v=7" defer></script>
 </body>
 </html>
