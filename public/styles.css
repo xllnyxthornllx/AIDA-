@@ -266,6 +266,9 @@ footer code { color:var(--cyan); font-family:'JetBrains Mono',monospace; }
 .lightbox-close { position:absolute; top:20px; right:28px; font-size:34px; color:var(--cyan); cursor:pointer; }
 
 /* ===== TOOLBAR BUTTONS ===== */
+.auth-btn { margin-left:18px; display:inline-flex; align-items:center; gap:8px; background:linear-gradient(90deg,var(--cyan2),var(--cyan)); color:#001314; border:none; padding:9px 18px; border-radius:999px; cursor:pointer; font-weight:700; font-size:13.5px; transition:.25s; white-space:nowrap; box-shadow:0 0 16px rgba(0,255,255,.25); }
+.auth-btn:hover { transform:translateY(-1px); box-shadow:0 0 26px rgba(0,255,255,.5); }
+.auth-btn.logged { background:var(--cyan-soft); color:var(--cyan); border:1px solid var(--cyan-border); box-shadow:none; }
 .btn-primary { 
   width:100%; background:linear-gradient(90deg,var(--cyan2),var(--cyan)); color:#001314; border:none; padding:11px; border-radius:9px; font-weight:700; cursor:pointer; transition:.2s; 
 }
