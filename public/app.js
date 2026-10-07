@@ -165,7 +165,7 @@ function renderEvidences() {
   const grid = document.getElementById('evidence-grid');
   grid.innerHTML = EVIDENCES.map((e0, i) => { const e = Object.assign({}, e0, evidenceMedia(e0)); return `
     <div class="evidence-card" data-full="${e.full || ''}" data-link="${e.link || ''}" style="animation-delay:${i*0.07}s">
-      ${e.kind === 'doc' ? `<a class="evidence-doc" href="${e.link}" target="_blank" rel="noopener"><span class="doc-icon">DOC</span><span>${m.label || 'Abrir documento'}</span></a>` : `<img class="evidence-thumb" src="${e.thumb}" alt="${e.title}" loading="lazy" onerror="this.closest('.evidence-card').querySelector('.evidence-fallback').style.display='flex';this.remove()">`}
+      ${e.kind === 'doc' ? `<a class="evidence-doc" href="${e.link}" target="_blank" rel="noopener"><span class="doc-icon">DOC</span><span>${e.label || 'Abrir documento'}</span></a>` : `<img class="evidence-thumb" src="${e.thumb}" alt="${e.title}" loading="lazy" onerror="this.closest('.evidence-card').querySelector('.evidence-fallback').style.display='flex';this.remove()">`}
       <div class="evidence-fallback" style="display:none"><a href="${e.link}" target="_blank" rel="noopener">Ver archivo</a></div>
       <div class="evidence-body"><h4>${e.title}</h4><p>${e.desc}</p><span class="evidence-tag">#${e.tag}</span>${e.by ? `<small class="evidence-by">· ${e.by.split('@')[0]}</small>` : ''}</div>
     </div>`; }).join('');
