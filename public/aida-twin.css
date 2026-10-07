@@ -47,6 +47,28 @@
 .aida-node[data-state="processing"] .h-ring { animation: halo-breathe 2.2s ease-in-out infinite; }
 .aida-node[data-state="processing"] .h-spin { opacity: .9; animation: halo-spin 1.6s linear infinite; }
 .aida-node[data-state="speaking"] .h-ring { animation: halo-pulse 1.1s ease-in-out infinite; }
+/* Barrido radar — solo LISTENING (micrófono rastreando la fuente de voz) */
+.aida-halo .h-sweep {
+  position: absolute; inset: 16px; border-radius: 50%; opacity: 0;
+  background: conic-gradient(from 0deg, var(--halo) 0deg, transparent 70deg);
+  -webkit-mask: radial-gradient(circle, transparent 58%, #000 59%, #000 68%, transparent 69%);
+  mask: radial-gradient(circle, transparent 58%, #000 59%, #000 68%, transparent 69%);
+  will-change: transform, opacity; transform: translateZ(0);
+}
+.aida-node[data-state="listening"] .h-sweep { opacity: .5; animation: halo-spin 3.2s linear infinite; }
+/* Ondas sonoras direccionales:
+   LISTENING = convergen hacia el nodo (audio entrando al micrófono)
+   SPEAKING  = divergen desde el nodo (audio saliendo del parlante) */
+.aida-waves { position: absolute; inset: -8px; pointer-events: none; }
+.aida-waves i {
+  position: absolute; inset: 0; border-radius: 50%;
+  border: 2px solid var(--halo); opacity: 0;
+  will-change: transform, opacity; transform: translateZ(0);
+}
+.aida-node[data-state="listening"] .aida-waves i { animation: wave-in 2.4s ease-out infinite; }
+.aida-node[data-state="speaking"] .aida-waves i { animation: wave-out 1.8s ease-out infinite; }
+.aida-waves i:nth-child(2) { animation-delay: .7s !important; }
+.aida-waves i:nth-child(3) { animation-delay: 1.4s !important; }
 
 /* --- Chasis + cristal + OLED --- */
 .aida-chassis {
@@ -55,6 +77,15 @@
   border: 1px solid rgba(255, 255, 255, .08); border-radius: 22px;
   padding: 12px 12px 10px; z-index: 2;
   box-shadow: 0 18px 44px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .06);
+  will-change: transform; transform: translateZ(0);
+  animation: chassis-float 6s ease-in-out infinite;
+}
+.aida-node[data-state="listening"] .aida-chassis { animation-duration: 3s; }
+.aida-node[data-state="speaking"] .aida-chassis { animation-duration: 2.2s; }
+.aida-reflect {
+  width: 150px; height: 14px; margin-top: -6px; border-radius: 50%;
+  background: radial-gradient(ellipse, var(--halo-soft), transparent 70%);
+  filter: blur(2px); transition: background .4s;
 }
 .aida-chassis::before, .aida-chassis::after {
   content: ''; position: absolute; top: 7px; width: 6px; height: 6px; border-radius: 50%;
@@ -104,6 +135,27 @@
 .aida-node[data-state="processing"] .oled-load { display: block; }
 .aida-node[data-state="processing"] .oled-load i { animation: oled-loading 1.4s ease-in-out infinite; }
 .aida-node[data-state="processing"] .oled-mouth { display: none; }
+/* Ecualizador de micrófono — solo LISTENING (nivel de entrada en vivo) */
+.oled-wave { display: none; align-items: flex-end; gap: 3px; height: 26px; }
+.oled-wave i { width: 4px; border-radius: 2px; background: var(--halo); box-shadow: 0 0 8px var(--halo-glow); height: 25%; }
+.aida-node[data-state="listening"] .oled-wave { display: flex; }
+.aida-node[data-state="listening"] .oled-wave i { animation: mic-eq .9s ease-in-out infinite; }
+.aida-node[data-state="listening"] .oled-wave i:nth-child(1) { animation-duration: .7s; }
+.aida-node[data-state="listening"] .oled-wave i:nth-child(2) { animation-duration: .9s; animation-delay: .1s; }
+.aida-node[data-state="listening"] .oled-wave i:nth-child(3) { animation-duration: .6s; animation-delay: .2s; }
+.aida-node[data-state="listening"] .oled-wave i:nth-child(4) { animation-duration: 1.1s; }
+.aida-node[data-state="listening"] .oled-wave i:nth-child(5) { animation-duration: .8s; animation-delay: .3s; }
+.aida-node[data-state="listening"] .oled-wave i:nth-child(6) { animation-duration: 1s; animation-delay: .15s; }
+.aida-node[data-state="listening"] .oled-wave i:nth-child(7) { animation-duration: .65s; animation-delay: .25s; }
+.aida-node[data-state="listening"] .oled-wave i:nth-child(8) { animation-duration: .95s; animation-delay: .05s; }
+.aida-node[data-state="listening"] .oled-wave i:nth-child(9) { animation-duration: .75s; animation-delay: .35s; }
+/* Línea de barrido vertical — solo PROCESSING (escaneo de frame OLED) */
+.oled-scanline {
+  display: none; position: absolute; top: 0; bottom: 0; left: 0; width: 22px;
+  background: linear-gradient(90deg, transparent, var(--halo-soft), transparent);
+  will-change: transform; transform: translateZ(0);
+}
+.aida-node[data-state="processing"] .oled-scanline { display: block; animation: scan-sweep 2s ease-in-out infinite; }
 .aida-glare {
   position: absolute; inset: 0; pointer-events: none;
   background: linear-gradient(115deg, rgba(255,255,255,.14) 0%, transparent 28%);
@@ -135,9 +187,14 @@
 @keyframes eye-scan { 0%, 100% { transform: translateX(-7px); } 50% { transform: translateX(7px); } }
 @keyframes eye-happy { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(.72); } }
 @keyframes mouth-eq { 0%, 100% { height: 25%; } 50% { height: 100%; } }
+@keyframes mic-eq { 0%, 100% { height: 18%; } 50% { height: 100%; } }
 @keyframes oled-loading { 0% { margin-left: -30%; } 100% { margin-left: 100%; } }
+@keyframes scan-sweep { 0% { transform: translateX(-30px); } 100% { transform: translateX(180px); } }
+@keyframes chassis-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@keyframes wave-in { 0% { transform: scale(1.35); opacity: 0; } 30% { opacity: .7; } 100% { transform: scale(.92); opacity: 0; } }
+@keyframes wave-out { 0% { transform: scale(.92); opacity: 0; } 30% { opacity: .7; } 100% { transform: scale(1.35); opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .aida-halo .h-ring, .aida-halo .h-spin, .eye, .oled-mouth i, .oled-load i, .aida-state-dot { animation: none !important; }
+  .aida-halo .h-ring, .aida-halo .h-spin, .aida-halo .h-sweep, .aida-waves i, .eye, .oled-mouth i, .oled-wave i, .oled-load i, .oled-scanline, .aida-state-dot, .aida-chassis { animation: none !important; }
 }
 @media (max-width: 420px) { .aida-halo { width: 200px; height: 200px; } .aida-chassis { width: 156px; margin-top: -152px; } }

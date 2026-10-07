@@ -8,7 +8,7 @@
 
   const STATES = {
     idle:       { label: 'IDLE',       aria: 'AIDA+ en reposo: halo cian respirando, ojos parpadeando', glow: 'rgba(0,255,255,.14)' },
-    listening:  { label: 'LISTENING',  aria: 'AIDA+ escuchando: halo azul fijo expandido, micrófono abierto', glow: 'rgba(0,85,255,.16)' },
+    listening:  { label: 'LISTENING',  aria: 'AIDA+ escuchando: ondas convergen al micrófono, halo azul expandido con barrido radar', glow: 'rgba(0,85,255,.16)' },
     processing: { label: 'PROCESSING', aria: 'AIDA+ procesando: halo violeta rotando, OLED cargando', glow: 'rgba(176,38,255,.16)' },
     speaking:   { label: 'SPEAKING',   aria: 'AIDA+ hablando: halo verde agua pulsante, OLED en modo feliz', glow: 'rgba(0,255,136,.15)' }
   };
@@ -32,17 +32,20 @@
     render() {
       this.mount.innerHTML =
         '<div class="aida-node" data-state="idle" role="img" aria-label="' + STATES.idle.aria + '">' +
-          '<div class="aida-halo" aria-hidden="true"><i class="h-ring"></i><i class="h-spin"></i><i class="h-core"></i></div>' +
+          '<div class="aida-halo" aria-hidden="true"><i class="h-ring"></i><i class="h-sweep"></i><i class="h-spin"></i><i class="h-core"></i><div class="aida-waves"><i></i><i></i><i></i></div></div>' +
           '<div class="aida-chassis">' +
             '<div class="aida-glass"><div class="aida-oled">' +
               '<div class="oled-eyes"><i class="eye left"></i><i class="eye right"></i></div>' +
+              '<div class="oled-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>' +
               '<div class="oled-mouth" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>' +
               '<div class="oled-load" aria-hidden="true"><i></i></div>' +
+              '<div class="oled-scanline" aria-hidden="true"></div>' +
               '<div class="oled-scan"></div>' +
             '</div><div class="aida-glare"></div></div>' +
             '<div class="aida-base"><span class="aida-state-dot" aria-hidden="true"></span>' +
             '<span class="aida-state-label">IDLE</span><span class="aida-spec">SSD1306 · 128×64</span></div>' +
           '</div>' +
+          '<div class="aida-reflect" aria-hidden="true"></div>' +
           '<div class="aida-controls" role="group" aria-label="Simular estado del nodo AIDA+">' +
             ORDER.map(s => '<button type="button" class="aida-btn" data-aida-state="' + s + '" aria-pressed="' + (s === 'idle') + '">' + STATES[s].label + '</button>').join('') +
             '<button type="button" class="aida-btn aida-auto" data-aida-auto="1" aria-pressed="' + (!!this.opts.auto && !REDUCED) + '">AUTO ' + (!!this.opts.auto && !REDUCED ? '●' : '○') + '</button>' +
