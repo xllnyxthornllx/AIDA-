@@ -301,17 +301,22 @@ function authError(msg) {
   err.classList.add('shake');
 }
 
+function setAuthBtn(label, logged) {
+  const b = document.getElementById('auth-btn');
+  const s = b.querySelector('span');
+  if (s) s.textContent = label; else b.textContent = label;
+  b.classList.toggle('logged', !!logged);
+}
+
 function updateAuthUI() {
-  const btn = document.getElementById('auth-btn');
   const addEv = document.getElementById('add-evidence-btn');
   const hint = document.getElementById('evidence-hint');
   const status = document.getElementById('auth-status');
   const loggedOut = document.getElementById('auth-loggedout');
   const loggedIn = document.getElementById('auth-loggedin');
   if (currentUser) {
-    const name = currentUser.email.split('@')[0];
-    btn.textContent = name + ' ●'; btn.classList.add('logged');
-    btn.setAttribute('aria-expanded', 'false');
+    setAuthBtn(currentUser.email.split('@')[0] + ' ●', true);
+    document.getElementById('auth-btn').setAttribute('aria-expanded', 'false');
     if (addEv) addEv.classList.remove('hidden');
     if (hint) { hint.textContent = 'Sesión activa como ' + currentUser.email + '. Puedes subir evidencias.'; hint.classList.add('ok'); }
     if (status) status.textContent = 'Conectado: ' + currentUser.email;
@@ -322,7 +327,7 @@ function updateAuthUI() {
     const ua = document.getElementById('user-avatar');
     if (ua) ua.textContent = (currentUser.displayName || currentUser.email).trim().charAt(0).toUpperCase();
   } else {
-    btn.textContent = 'Iniciar sesión'; btn.classList.remove('logged');
+    setAuthBtn('Iniciar sesión', false);
     if (addEv) addEv.classList.add('hidden');
     if (hint) { hint.textContent = 'Inicia sesión para subir nuevas evidencias.'; hint.classList.remove('ok'); }
     if (status) status.textContent = 'Modo lectura pública.';
