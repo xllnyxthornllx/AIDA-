@@ -8,7 +8,7 @@
 
   const STATES = {
     idle:       { label: 'IDLE',       aria: 'AIDA+ en reposo: halo cian respirando, ojos parpadeando', glow: 'rgba(0,255,255,.14)' },
-    listening:  { label: 'LISTENING',  aria: 'AIDA+ escuchando: ondas convergen al micrófono, halo azul expandido con barrido radar', glow: 'rgba(0,85,255,.16)' },
+    listening:  { label: 'LISTENING',  aria: 'AIDA+ escuchando: ojos hacia arriba, oreja radar desplegada, ondas convergen al micrófono', glow: 'rgba(0,85,255,.16)' },
     processing: { label: 'PROCESSING', aria: 'AIDA+ procesando: halo violeta rotando, OLED cargando', glow: 'rgba(176,38,255,.16)' },
     speaking:   { label: 'SPEAKING',   aria: 'AIDA+ hablando: halo verde agua pulsante, OLED en modo feliz', glow: 'rgba(0,255,136,.15)' }
   };
@@ -34,6 +34,7 @@
         '<div class="aida-node" data-state="idle" role="img" aria-label="' + STATES.idle.aria + '">' +
           '<div class="aida-halo" aria-hidden="true"><i class="h-ring"></i><i class="h-sweep"></i><i class="h-spin"></i><i class="h-core"></i><div class="aida-waves"><i></i><i></i><i></i></div></div>' +
           '<div class="aida-chassis">' +
+            '<div class="aida-ear" aria-hidden="true"><div class="dish"></div><div class="sig"><i></i><i></i><i></i></div></div>' +
             '<div class="aida-glass"><div class="aida-oled">' +
               '<div class="oled-eyes"><i class="eye left"></i><i class="eye right"></i></div>' +
               '<div class="oled-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>' +

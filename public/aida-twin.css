@@ -87,6 +87,31 @@
   background: radial-gradient(ellipse, var(--halo-soft), transparent 70%);
   filter: blur(2px); transition: background .4s;
 }
+/* Oreja radar — solo LISTENING: el nodo "para la oreja" como mano ahuecada.
+   Plato en C abierto al entorno + ondas que se embudan hacia él. */
+.aida-ear {
+  position: absolute; right: -52px; top: 14px; width: 54px; height: 64px;
+  opacity: 0; transform: scale(.4); transform-origin: left center;
+  transition: opacity .35s, transform .4s var(--ease);
+  pointer-events: none; z-index: 3;
+}
+.aida-node[data-state="listening"] .aida-ear { opacity: 1; transform: scale(1); }
+.aida-ear::before {
+  content: ''; position: absolute; left: -13px; top: 29px; width: 14px; height: 5px;
+  border-radius: 3px; background: var(--halo); box-shadow: 0 0 10px var(--halo-glow);
+}
+.aida-ear .dish {
+  position: absolute; left: 0; top: 6px; width: 30px; height: 52px;
+  border: 4px solid var(--halo); border-right-color: transparent; border-radius: 50%;
+  box-shadow: 0 0 14px var(--halo-glow), inset 0 0 12px var(--halo-soft);
+}
+.aida-ear .sig i { position: absolute; border: 2px solid var(--halo); border-radius: 50%; opacity: 0; will-change: transform, opacity; }
+.aida-ear .sig i:nth-child(1) { left: 27px; top: 25px; width: 14px; height: 14px; }
+.aida-ear .sig i:nth-child(2) { left: 22px; top: 20px; width: 24px; height: 24px; }
+.aida-ear .sig i:nth-child(3) { left: 17px; top: 15px; width: 34px; height: 34px; }
+.aida-node[data-state="listening"] .sig i { animation: sig-in 1.6s ease-out infinite; }
+.aida-node[data-state="listening"] .sig i:nth-child(2) { animation-delay: .35s; }
+.aida-node[data-state="listening"] .sig i:nth-child(3) { animation-delay: .7s; }
 .aida-chassis::before, .aida-chassis::after {
   content: ''; position: absolute; top: 7px; width: 6px; height: 6px; border-radius: 50%;
   background: radial-gradient(circle at 35% 35%, #4b5563, #11141a);
@@ -108,7 +133,8 @@
   position: absolute; inset: 0; pointer-events: none; opacity: .5;
   background: repeating-linear-gradient(to bottom, transparent 0 3px, rgba(255,255,255,.022) 3px 4px);
 }
-.oled-eyes { display: flex; gap: 26px; }
+.oled-eyes { display: flex; gap: 26px; transition: transform .35s var(--ease); }
+.aida-node[data-state="listening"] .oled-eyes { transform: translateY(-7px); }
 .eye {
   width: 26px; height: 40px; border-radius: 13px; background: var(--halo);
   box-shadow: 0 0 12px var(--halo-glow), 0 0 34px var(--halo-soft);
@@ -193,8 +219,9 @@
 @keyframes chassis-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 @keyframes wave-in { 0% { transform: scale(1.35); opacity: 0; } 30% { opacity: .7; } 100% { transform: scale(.92); opacity: 0; } }
 @keyframes wave-out { 0% { transform: scale(.92); opacity: 0; } 30% { opacity: .7; } 100% { transform: scale(1.35); opacity: 0; } }
+@keyframes sig-in { 0% { transform: scale(1.5); opacity: 0; } 35% { opacity: .8; } 100% { transform: scale(.85); opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .aida-halo .h-ring, .aida-halo .h-spin, .aida-halo .h-sweep, .aida-waves i, .eye, .oled-mouth i, .oled-wave i, .oled-load i, .oled-scanline, .aida-state-dot, .aida-chassis { animation: none !important; }
+  .aida-halo .h-ring, .aida-halo .h-spin, .aida-halo .h-sweep, .aida-waves i, .aida-ear .sig i, .eye, .oled-mouth i, .oled-wave i, .oled-load i, .oled-scanline, .aida-state-dot, .aida-chassis { animation: none !important; }
 }
 @media (max-width: 420px) { .aida-halo { width: 200px; height: 200px; } .aida-chassis { width: 156px; margin-top: -152px; } }
