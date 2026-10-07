@@ -439,6 +439,18 @@ function driveStatus(msg, pct) {
   if (txt) txt.textContent = msg;
 }
 
+function paintDriveState() {
+  const el = document.getElementById('drive-conn');
+  if (!el) return;
+  if (driveToken()) {
+    el.textContent = 'Drive conectado ✓ — puedes subir archivos a la carpeta del equipo.';
+    el.className = 'drive-conn ok';
+  } else {
+    el.textContent = 'Para subir archivos entra con "Continuar con Google" (otorga permiso de Drive). Con correo solo puedes pegar links.';
+    el.className = 'drive-conn';
+  }
+}
+
 function uploadToDrive(file, onProgress) {
   return new Promise((resolve, reject) => {
     const token = driveToken();
@@ -474,7 +486,10 @@ function uploadToDrive(file, onProgress) {
           driveAccessToken = null;
           reject(new Error('Permiso de Drive vencido. Cierra sesión y entra de nuevo con Google.'));
         } else {
-          reject(new Error('Drive respondió ' + xhr.status));
+          let detail = '';
+          try { const j = JSON.parse(xhr.responseText); if (j && j.error) detail = ': ' + (j.error.message || j.error.status); } catch (e) {}
+          console.error('[Drive] subida falló', xhr.status, xhr.responseText);
+          reject(new Error('Drive respondió ' + xhr.status + detail));
         }
       };
       xhr.onerror = () => reject(new Error('Error de red subiendo a Drive'));
@@ -511,6 +526,7 @@ function initAuth() {
   document.getElementById('evidence-modal').addEventListener('click', e => { if (e.target.id === 'evidence-modal') closeModal('evidence-modal'); });
   document.getElementById('add-evidence-btn').addEventListener('click', () => {
     if (!requireAuth()) return;
+    paintDriveState();
     openModal('evidence-modal');
   });
   // Mostrar / ocultar contraseña
@@ -644,6 +660,7 @@ function initAuth() {
   auth.onAuthStateChanged(user => {
     currentUser = user;
     updateAuthUI();
+    paintDriveState();
     if (user) subscribeDB();
   });
 
@@ -677,10 +694,15 @@ function initEffects() {
   
   const bar = document.getElementById('scroll-progress');
   const header = document.getElementById('site-header');
+  let ticking = false;
   window.addEventListener('scroll', () => {
-    const h = document.documentElement;
-    bar.style.width = (h.scrollTop / (h.scrollHeight - h.clientHeight) * 100) + '%';
-    header.classList.toggle('scrolled', h.scrollTop > 10);
+    if (ticking) return; ticking = true;
+    requestAnimationFrame(() => {
+      const h = document.documentElement;
+      bar.style.width = (h.scrollTop / (h.scrollHeight - h.clientHeight) * 100) + '%';
+      header.classList.toggle('scrolled', h.scrollTop > 10);
+      ticking = false;
+    });
   }, { passive: true });
 
   const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } }), { threshold: 0.12 });
