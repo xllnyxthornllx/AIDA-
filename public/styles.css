@@ -15,6 +15,14 @@
   --shadow: 0 12px 40px rgba(0,0,0,.45);
   --ease: cubic-bezier(.22,1,.36,1);
   --transition: all .25s var(--ease);
+  /* Paleta LED estandarizada AIDA+ (WS2812B) + OLED */
+  --led-idle: #00ffff;
+  --led-listen: #0055ff;
+  --led-process: #b026ff;
+  --led-speak: #00ff88;
+  --oled-bg: #05070b;
+  /* Reflejo del halo sobre el dashboard (lo actualiza el Gemelo Digital) */
+  --aida-glow: rgba(0,255,255,.14);
 }
 * { margin:0; padding:0; box-sizing:border-box; }
 html { scroll-behavior:smooth; }
@@ -215,6 +223,7 @@ body {
 .kanban-card { 
   background:var(--card); border:1px solid var(--border); border-left:3px solid var(--cyan); 
   border-radius:12px; padding:14px; transition:.22s var(--ease), box-shadow .22s, border-color .22s; animation:cardIn .5s var(--ease) both; 
+  box-shadow:0 6px 20px rgba(0,0,0,.3), 0 0 18px var(--aida-glow);
 }
 @keyframes cardIn { from { opacity:0; transform:translateY(14px) scale(.98); } }
 .kanban-card:hover { transform:translateY(-4px); border-color:var(--cyan-border); box-shadow:0 10px 26px rgba(0,0,0,.4); }
