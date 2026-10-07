@@ -6,7 +6,8 @@
   <title>AIDA+ | Hito N° 2 — Seguimiento Oficial</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
-  <link rel="stylesheet" href="styles.css?v=7">
+  <link rel="stylesheet" href="styles.css?v=8">
+  <link rel="stylesheet" href="aida-twin.css?v=8">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -74,15 +75,11 @@
           </div>
         </div>
         <div class="hero-visual reveal">
-          <div class="glass-card tilt" tabindex="0" aria-label="Visualización del nodo central ESP32">
+          <div class="glass-card" tabindex="0" aria-label="Gemelo digital del nodo central AIDA+">
             <div class="glass-glow" aria-hidden="true"></div>
-            <p class="glass-eyebrow">Nodo central · Edge AI</p>
-            <h3>ESP32 + FreeRTOS</h3>
-            <p>OLED SSD1306 · WS2812B · GPS · MQTT</p>
-            <div class="chip-row"><span class="chip">Wi-Fi</span><span class="chip">BLE</span><span class="chip">MQTT</span></div>
-            <span class="status"><span class="status-dot" aria-hidden="true"></span>En línea</span>
-            <!-- Canvas simplificado - ya no usa Chart.js -->
-            <canvas id="mini-chart" width="200" height="80" aria-hidden="true"></canvas>
+            <p class="glass-eyebrow">Nodo central · Edge AI · Gemelo digital</p>
+            <div id="aida-twin-mount"></div>
+            <div class="chip-row"><span class="chip">ESP32</span><span class="chip">SSD1306</span><span class="chip">WS2812B</span><span class="chip">MQTT</span></div>
           </div>
         </div>
       </div>
@@ -155,7 +152,7 @@
   <footer role="contentinfo">
     <div class="container footer-inner">
       <p><strong>AIDA+</strong> — Tecsup Arequipa · Implementación de Tecnologías Emergentes</p>
-      <p>Docente auditor: <code>rllerenad@tecsup.edu.pe</code> · © 2026 · <span id="app-version">v7</span></p>
+      <p>Docente auditor: <code>rllerenad@tecsup.edu.pe</code> · © 2026 · <span id="app-version">v8</span></p>
     </div>
   </footer>
 
@@ -235,7 +232,8 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-  <script src="firebase-config.js?v=7" defer></script>
-  <script src="app.js?v=7" defer></script>
+  <script src="firebase-config.js?v=8" defer></script>
+  <script src="aida-twin.js?v=8" defer></script>
+  <script src="app.js?v=8" defer></script>
 </body>
 </html>
