@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AIDA+ | Hito N° 2 — Seguimiento Oficial</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
-  <link rel="stylesheet" href="styles.css?v=8">
-  <link rel="stylesheet" href="aida-twin.css?v=8">
+  <link rel="icon" href="aida-mark.svg?v=9" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css?v=9">
+  <link rel="stylesheet" href="aida-twin.css?v=9">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -33,7 +33,21 @@
   <header class="site-header" id="site-header" role="banner">
     <div class="container header-inner">
       <a href="#inicio" class="brand" aria-label="AIDA+ Inicio">
-        <span class="brand-icon" aria-hidden="true">⟨/⟩</span>
+        <svg class="brand-mark" viewBox="0 0 124 124" aria-hidden="true" focusable="false">
+          <defs>
+            <linearGradient id="hd-shell" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3a4556"/><stop offset=".5" stop-color="#171c25"/><stop offset="1" stop-color="#2b3444"/></linearGradient>
+            <linearGradient id="hd-plate" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8edf4"/><stop offset=".55" stop-color="#aeb8c6"/><stop offset="1" stop-color="#7c8798"/></linearGradient>
+            <filter id="hd-glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <g stroke-width="5" stroke-linecap="round"><line x1="62" y1="26" x2="62" y2="14" stroke="#00ffff"/><line x1="87.5" y1="36.5" x2="96" y2="28" stroke="#465366"/><line x1="98" y1="62" x2="110" y2="62" stroke="#00ffff"/><line x1="87.5" y1="87.5" x2="96" y2="96" stroke="#465366"/><line x1="62" y1="98" x2="62" y2="110" stroke="#00ffff"/><line x1="36.5" y1="87.5" x2="28" y2="96" stroke="#465366"/><line x1="26" y1="62" x2="14" y2="62" stroke="#00ffff"/><line x1="36.5" y1="36.5" x2="28" y2="28" stroke="#465366"/></g>
+          <g fill="#07090d" stroke-width="4"><circle cx="62" cy="8" r="5.5" stroke="#00ffff"/><circle cx="100.2" cy="23.8" r="5.5" stroke="#465366"/><circle cx="116" cy="62" r="5.5" stroke="#00ffff"/><circle cx="100.2" cy="100.2" r="5.5" stroke="#465366"/><circle cx="62" cy="116" r="5.5" stroke="#00ffff"/><circle cx="23.8" cy="100.2" r="5.5" stroke="#465366"/><circle cx="8" cy="62" r="5.5" stroke="#00ffff"/><circle cx="23.8" cy="23.8" r="5.5" stroke="#465366"/></g>
+          <polygon points="62,26 93.2,44 93.2,80 62,98 30.8,80 30.8,44" fill="none" stroke="url(#hd-shell)" stroke-width="7" stroke-linejoin="round"/>
+          <polygon points="62,34 86.2,48 86.2,76 62,90 37.8,76 37.8,48" fill="url(#hd-plate)" stroke="rgba(255,255,255,.25)" stroke-width="1" stroke-linejoin="round"/>
+          <rect x="44" y="48" width="36" height="28" rx="9" fill="#05070b" stroke="#00ffff" stroke-width="2" filter="url(#hd-glow)"/>
+          <g fill="#00ffff" filter="url(#hd-glow)"><rect class="logo-eye" x="52" y="53.5" width="4.5" height="10" rx="2.25"/><rect class="logo-eye e2" x="67.5" y="53.5" width="4.5" height="10" rx="2.25"/></g>
+          <path d="M54.5,66 Q62,72 69.5,66" fill="none" stroke="#00ffff" stroke-width="3" stroke-linecap="round" filter="url(#hd-glow)"/>
+          <g stroke="#2a3342" stroke-width="3" stroke-linecap="round"><line x1="52" y1="80" x2="72" y2="80"/><line x1="54.5" y1="83" x2="69.5" y2="83"/><line x1="57" y1="86" x2="67" y2="86"/></g>
+        </svg>
         <span class="brand-name">AIDA<em>+</em></span>
       </a>
       <nav class="nav" role="navigation" aria-label="Principal">
@@ -152,7 +166,7 @@
   <footer role="contentinfo">
     <div class="container footer-inner">
       <p><strong>AIDA+</strong> — Tecsup Arequipa · Implementación de Tecnologías Emergentes</p>
-      <p>Docente auditor: <code>rllerenad@tecsup.edu.pe</code> · © 2026 · <span id="app-version">v8</span></p>
+      <p>Docente auditor: <code>rllerenad@tecsup.edu.pe</code> · © 2026 · <span id="app-version">v9</span></p>
     </div>
   </footer>
 
@@ -160,7 +174,7 @@
   <div id="auth-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="auth-title" hidden>
     <div class="modal-box auth-box">
       <button class="modal-close" id="auth-close" aria-label="Cerrar">&times;</button>
-      <div class="auth-brand"><span class="brand-icon" aria-hidden="true">⟨/⟩</span></div>
+      <div class="auth-brand"><img src="aida-mark.svg" alt="" width="34" height="34"></div>
       <h3 id="auth-title">Acceso equipo AIDA+</h3>
       <p class="modal-sub">Recomendado: ingresa con tu correo @tecsup.edu.pe. La visualización es pública.</p>
       <div id="auth-loggedout">
@@ -232,8 +246,8 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-  <script src="firebase-config.js?v=8" defer></script>
-  <script src="aida-twin.js?v=8" defer></script>
-  <script src="app.js?v=8" defer></script>
+  <script src="firebase-config.js?v=9" defer></script>
+  <script src="aida-twin.js?v=9" defer></script>
+  <script src="app.js?v=9" defer></script>
 </body>
 </html>
