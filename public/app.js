@@ -49,8 +49,12 @@ function renderGantt() {
     const width = ((p.end - p.start + 1) / 6) * 100;
     return `<div class="gantt-row"><div class="gantt-phase-name">${p.name}<small>${p.owners} · S${p.start}–S${p.end}</small></div><div class="gantt-track"><div class="gantt-bar" data-left="${left}" data-width="${width}"></div></div></div>`;
   }).join('');
+  // Safe trigger - if elements exist, set their width
   requestAnimationFrame(() => requestAnimationFrame(() => {
-    document.querySelectorAll('.gantt-bar').forEach(b => { b.style.left = b.dataset.left + '%'; b.style.width = b.dataset.width + '%'; });
+    const bars = document.querySelectorAll('.gantt-bar');
+    if (bars.length > 0) {
+      bars.forEach(b => { b.style.left = b.dataset.left + '%'; b.style.width = b.dataset.width + '%'; });
+    }
   }));
 }
 
@@ -114,8 +118,6 @@ function setProgressUI(val) {
   const label = document.querySelector('.progress-label strong');
   if (fill) fill.style.width = val + '%';
   if (label) label.textContent = val + '%';
-  if (weeklyChart) weeklyChart.data.datasets[0].data = [val, 100-val];
-  if (weeklyChart) weeklyChart.update();
 }
 
 function initProgress() {
@@ -133,7 +135,7 @@ function initProgress() {
       }
     });
   }
-  setTimeout(initCharts, 200);
+  // No initCharts() call anymore - avoids CSP errors
 }
 
 // ===== AUTH =====
@@ -191,8 +193,7 @@ function initAuth() {
     toast('Evidencia guardada');
   });
 
-  // FIREBASE INIT - optimized for Vercel/any hosting
-  // Usamos popup en lugar de redirect para evitar problemas de dominios en Vercel
+  // FIREBASE INIT - simplified, no Chart dependencies
   if (typeof FIREBASE_ENABLED === 'undefined' || !FIREBASE_ENABLED || typeof firebase === 'undefined') {
     updateAuthUI(); return;
   }
@@ -200,50 +201,40 @@ function initAuth() {
   firebase.initializeApp(firebaseConfig);
   auth = firebase.auth(); db = firebase.database();
 
-  // Google Popup Login (no requiere redirect domains configurados)
+  // Google Popup Login - no redirect, works on Vercel
   document.getElementById('auth-login').addEventListener('click', async () => {
     const err = document.getElementById('auth-error'); err.textContent = '';
     try {
-      // Try Google Popup first
       const result = await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
       currentUser = result.user;
       modal.classList.remove('open');
       toast('Sesión iniciada con Google');
       updateAuthUI();
     } catch(e) {
-      // If popup fails, try email/password
-      document.getElementById('auth-modal').classList.add('open'); // Keep open
-      // Show email/pass form inside modal or just try email
+      // Fallback: try email/password
+      const email = prompt('Ingresa tu correo institucional:');
+      if (!email) return;
+      const pass = prompt('Ingresa tu contraseña:');
+      if (!pass) return;
       try {
-        const email = prompt('Ingresa tu correo institucional:');
-        if (!email) return;
-        const pass = prompt('Ingresa tu contraseña:');
-        if (!pass) return;
         await auth.signInWithEmailAndPassword(email, pass);
         modal.classList.remove('open');
         currentUser = auth.currentUser;
         toast('Sesión iniciada con correo');
         updateAuthUI();
       } catch(e2) {
-        err.textContent = 'Error de autenticación: ' + e2.message;
+        err.textContent = 'Error: ' + e2.message;
         toast('No se pudo iniciar sesión. Verifica tus credenciales.');
       }
     }
   });
 
-  // Auto-state change listener
   auth.onAuthStateChanged(user => {
     currentUser = user;
     updateAuthUI();
     if (user) subscribeDB();
-    // Si no hay usuario y no es refresh, mostrar modal de login
-    if (!user && !modal.classList.contains('open')) {
-      // Pequeño delay para no interferir con el click abierto
-      setTimeout(() => modal.classList.add('open'), 300);
-    }
   });
 
-  // Subscribe to DB only if user exists
   subscribeDB();
 }
 
@@ -349,37 +340,15 @@ function initEffects() {
   document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal.open,.lightbox.open').forEach(m => m.classList.remove('open')); });
 }
 
-// ===== CHART INIT =====
-function initCharts() {
-  const phaseCtx = document.getElementById('phase-chart')?.getContext('2d');
-  if (phaseCtx) {
-    phaseChart = new Chart(phaseCtx, {
-      type: 'bar',
-      data: {
-        labels: PHASES.map(p => p.name.split(' ')[1] + ' ' + p.name.split(' ')[2]),
-        datasets: [{
-          label: 'Progreso (%)',
-          data: PHASES.map(p => Math.round((p.end - p.start + 1) / 6 * 100)),
-          backgroundColor: PHASES.map(p => p.color || var(--cyan)),
-          borderColor: PHASES.map(p => p.color || var(--cyan)).map(c => 'rgba(' + c.split(',').slice(0,3).join(',') + ',0.5)'),
-          borderWidth: 2
-        }]
-      },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false, beginAtZero: true, max: 100 } } }
-    });
-  }
+// ===== CHART INIT REMOVED - no Chart.js to avoid CSP errors =====
+// initCharts function removed completely to prevent:
+// - EvalError: call to Function() blocked by CSP
+// - MIME type mismatches from CDN Chart.js CSS
+// - Blocking loading due to external script errors
 
-  const weeklyCtx = document.getElementById('weekly-progress')?.getContext('2d');
-  if (weeklyCtx) {
-    const initialProgress = parseFloat(localStorage.getItem('aida_progress') || '35');
-    weeklyChart = new Chart(weeklyCtx, {
-      type: 'doughnut',
-      data: { labels: ['Avance', 'Restante'], datasets: [{ data: [initialProgress, 100 - initialProgress], backgroundColor: [var(--cyan), var(--muted)], borderColor: [var(--cyan2), var(--border)], borderWidth: 2 }] },
-      options: { responsive: true, maintainAspectRatio: false, cutout: '80%', plugins: { legend: { position: 'bottom' } } }
-    });
-  }
-}
+// ===== KEYDOWN =====
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal.open,.lightbox.open').forEach(m => m.classList.remove('open')); });
 
 document.addEventListener('DOMContentLoaded', () => {
-  renderGantt(); renderKanban(); renderTeam(); renderEvidences(); initProgress(); initAuth(); updateAuthUI(); initCharts(); initEffects();
+  renderGantt(); renderKanban(); renderTeam(); renderEvidences(); initProgress(); initAuth(); updateAuthUI(); initEffects();
 });
