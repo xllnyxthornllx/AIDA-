@@ -1,4 +1,4 @@
-# 2. Actuadores a utilizar
+# 2. Actuadores a utilizados
 
 ## Listado de actuadores
 
