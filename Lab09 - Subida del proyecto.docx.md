@@ -213,8 +213,8 @@ Página de dashboard **`AIDA+ LAB 9`** (ruta `/aida-lab9`) construida con **Node
 
 | Grupo | Widget(s) | Qué muestra |
 |---|---|---|
-| **Sensores AIDA+** | `ui-gauge` Temperatura (°C, aguja) · `ui-gauge` Humedad (%, aguja) | Valores en tiempo real de DHT22 |
-| **Geolocalización y Estado** | `ui-text` GPS · `ui-text` Estado · `ui-template` mapa OpenStreetMap | Coordenadas, estado y ubicación del asistente |
+| **Sensores AIDA+** | 2 × `ui-gauge` (`gauge-tank` 6 × 5): Temperatura (°C, 0–60) y Humedad (%, 0–100) | Valores en tiempo real del DHT22 |
+| **Geolocalización y Estado** | `ui-text` GPS (valor *JSONata*) · `ui-text` Estado · `ui-template` mapa OpenStreetMap | Coordenadas, estado y ubicación del asistente |
 | **Control de Actuadores** | 4 × `ui-button`, `ui-template` color picker, `ui-slider` | Envía comandos al ESP32 (ver punto 2) |
 
 **📷 Evidencia 4 — Dashboard de sensores**
@@ -287,6 +287,23 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
 [MQTT] << aida/commands : {"servo_angle":135}
 [AIDA+] Servo -> 135 grados
 ```
+
+**Verificación real del lazo de control (evidencia de la captura del broker)**
+
+Con el dashboard abierto se pulsaron los controles y se capturó lo publicado en el broker:
+
+```bash
+$ mosquitto_sub -h localhost -u aida -P '****' -t 'aida/commands' -v
+aida/commands {"state":"listening"}     <- botón ESCUCHANDO
+aida/commands {"state":"speaking"}      <- botón HABLANDO
+aida/commands {"state":"processing"}    <- botón PROCESANDO IA
+aida/commands {"state":"idle"}          <- botón REPOSO
+aida/commands {"led_color":"#ff0000"}   <- selector de color
+aida/commands {"servo_angle":134}       <- slider del servo (una trama por paso)
+```
+
+Esto demuestra que **cada control del dashboard publica exactamente el JSON previsto**
+en `aida/commands`; el mismo camino que sigue el comando hasta el ESP32.
 
 **📷 Evidencia 6 — Que el ESP32 obedece al dashboard**
 > _Pegar captura (o dos capturas lado a lado) mostrando: (a) el dashboard con los botones/slider/color, y (b) el monitor serial con las líneas `[MQTT] << aida/commands` y `[AIDA+] …`, y el cambio de color del servo/OLED/tira en Wokwi._
@@ -452,6 +469,10 @@ Se organiza en **14 tipos de diagrama**, agrupados en dos grandes familias:
 7. **Abrir el puerto hay que hacerlo en dos niveles.** En este servidor UFW ya permitía 1880/1883, pero el acceso desde Internet depende también del **Security Group** de AWS. Se comprobó **desde el cliente** con `Test-NetConnection` antes de dar por buena la conectividad.
 
 8. **La protección del dashboard es una decisión de diseño.** El `httpNodeAuth` de Node-RED protege `/ui` con autenticación básica; sin esa capa, cualquiera con la IP podría accionar los actuadores del asistente. Para el alcance del laboratorio es suficiente, pero un despliegue real debería usar HTTPS (por ejemplo, un *reverse proxy* Nginx + certificado) en lugar de HTTP en texto plano.
+
+9. **Doble conversión del mensaje: un error real que costó depurar.** El nodo `mqtt in` con `datatype: "auto-detect"` **ya convierte** la trama a objeto; si a continuación se coloca un nodo `json` (cuya acción por defecto convierte objeto → cadena) el `payload` vuelve a ser *string*, los gauges reciben `undefined` y el display muestra `[object Object]`. La solución adoptada es **explícita y sin ambigüedad**: `mqtt in` con `datatype: "utf8"` (lo que MQTT realmente transporta, una cadena) + un nodo `json` que hace el parseo. Lección: no encadenar dos conversiones del mismo mensaje y **verificar el tipo real** del `payload` con el nodo `debug` antes de culpar al dashboard.
+
+10. **El catálogo de widgets de Dashboard 2.0 tiene reglas propias.** `ui-text` **no** admite plantillas *mustache*: su campo *Value* es un *typed input* que acepta `msg`, `str`, `num`, **`jsonata`**, `flow` y `global`; para concatenar dos valores hay que usar JSONata (`payload.lat & ', ' & payload.lon`). En `ui-gauge`, `gtype` acepta únicamente `gauge-tile`, `gauge-34`, `gauge-half`, `gauge-battery` y `gauge-tank`: un valor inválido (se probó `"gauge"`) degrada el dibujo —no se traza el arco y las etiquetas mín/máx se superponen en el centro (*"600"*, *"1000"*)—. Se adoptó la configuración ya probada en los dashboards previos del servidor (`gauge-tank`, 6 × 5), verificada renderizando la página real en un navegador a través de un túnel SSH.
 
 ---
 
