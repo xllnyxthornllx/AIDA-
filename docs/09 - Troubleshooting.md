@@ -16,7 +16,7 @@ created: 2026-10-18
 
 ```mermaid
 flowchart TD
-    START([Clic Guardar]) --> LOG1{¿Aparece<br/>[Evidence] submit<br/>en consola?}
+    START([Clic Guardar]) --> LOG1{"¿Aparece<br/>[Evidence] submit<br/>en consola?"}
     LOG1 -->|No| OLD[Versión vieja en caché<br/>→ incógnito + vN en footer]
     LOG1 -->|Sí| FILE{¿Elegiste archivo?}
 
@@ -24,14 +24,14 @@ flowchart TD
     FILE -->|Sí| TOKEN{¿Drive conectado ✓?}
 
     TOKEN -->|No| RECON[Pulsa Reconectar Drive<br/>o entra con Google]
-    TOKEN -->|Sí| UP{¿[Drive] subiendo?}
+    TOKEN -->|Sí| UP{"¿[Drive] subiendo?"}
 
     UP -->|No| SIZE{¿>25 MB?}
     SIZE -->|Sí| REDUCE[Comprime el archivo]
     SIZE -->|No| RESTART[Recarga y reintenta]
 
-    UP -->|Sí| DONE{¿[Drive] archivo<br/>creado?}
-    DONE -->|No| NET[Error de red / token<br/>→ ver [Drive] error]
+    UP -->|Sí| DONE{"¿[Drive] archivo<br/>creado?"}
+    DONE -->|No| NET["Error de red / token<br/>→ ver [Drive] error"]
     DONE -->|Sí| SAVED([✅ Evidencia guardada])
 ```
 
@@ -103,7 +103,7 @@ flowchart LR
     C1[1. Footer muestra vN?] --> C2[2. ¿Incógnito sin extensiones?]
     C2 --> C3[3. ¿Sesión con Google?]
     C3 --> C4[4. ¿Drive conectado ✓?]
-    C4 --> C5[5. Consola [Drive]/[Evidence]]
+    C4 --> C5["5. Consola [Drive]/[Evidence]"]
 ```
 
 - [ ] El **footer** muestra la versión esperada (`v16`).

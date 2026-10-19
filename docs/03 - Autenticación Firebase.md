@@ -27,7 +27,7 @@ graph TD
     USER -->|WRITE| EV[evidences]
     USER -->|DELETE| EV
     USER -->|WRITE| PROG[progress]
-    ANON -.X.->|BLOQUEADO| TASKS
+    ANON -.->|BLOQUEADO| TASKS
 ```
 
 ```json

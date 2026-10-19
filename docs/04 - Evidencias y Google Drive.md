@@ -60,8 +60,8 @@ sequenceDiagram
 graph TD
     IMG[Evidencia] --> FILE{¿Archivo o link?}
     FILE -->|Archivo subido| D1[Drive: thumbnailLink<br/>miniatura + lightbox]
-    FILE -->|Link archivo Drive| D2[/file/d/ID → thumbnail?id=ID]
-    FILE -->|Link carpeta Drive| D3[/drive/folders/ID<br/>tarjeta Abrir carpeta]
+    FILE -->|Link archivo Drive| D2["/file/d/ID → thumbnail?id=ID"]
+    FILE -->|Link carpeta Drive| D3["/drive/folders/ID<br/>tarjeta Abrir carpeta"]
     FILE -->|URL imagen directa| D4[img src]
     FILE -->|URL documento| D5[tarjeta DOC + enlace]
 ```

@@ -21,23 +21,23 @@ created: 2026-10-18
 ```mermaid
 timeline
     title Evolución de AIDA+
-    section v1-v3 : Rediseño
+    section v1-v3 · Rediseño
       5415d66 : Rediseño completo, tema, partículas
       6021bc8 : Fix Vercel loading + SPA routing
       28dfdc3 : Remove Chart.js (CSP)
-    section v4-v6 : Auth & Evidencias
+    section v4-v6 · Auth & Evidencias
       70b56a9 : Rediseño login pro
       56de058 : Evidencias desde links Drive
       d69f530 : Eliminar evidencias
       3884d6a : Fix m.label
-    section v7-v9 : Drive & Twin & Logo
+    section v7-v9 · Drive & Twin & Logo
       118c918 : Subida directa a Drive Pro
       26985f5 : Gemelo Digital FSM
       bec1343 : Logotipo SVG
-    section v10-v11 : Gemelo v2
+    section v10-v11 · Gemelo v2
       65a7fc0 : Ondas, radar, EQ micro
       722c5d5 : Oreja radar + ojos arriba
-    section v12-v16 : Fix subida Drive
+    section v12-v16 · Fix subida Drive
       75f99a5 : Diagnóstico subida
       ef0cf37 : Token localStorage
       8d9f0d8 : Resucitar título
