@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "author": "Equipo AIDA+ - Laboratorio 9 (Canaza, Ccarita, Ramos, Mancha, Torres)",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": -40, "left": 0, "attrs": {} },
+    { "type": "board-ssd1306", "id": "oled", "top": -250, "left": -260, "attrs": {} },
+    { "type": "wokwi-dht22", "id": "dht", "top": -140, "left": -320, "attrs": {} },
+    { "type": "wokwi-led-strip", "id": "strip", "top": 130, "left": -250, "attrs": { "pixels": "8" } },
+    { "type": "wokwi-potentiometer", "id": "pot", "top": 300, "left": -260, "attrs": {} },
+    { "type": "wokwi-servo", "id": "servo1", "top": 320, "left": 90, "attrs": {} },
+    { "type": "wokwi-buzzer", "id": "bz1", "top": 250, "left": 260, "attrs": {} },
+    { "type": "wokwi-text", "id": "lbl1", "top": -320, "left": -320, "attrs": { "text": "AIDA+ · LAB 9\nSensores: DHT22 + Voz(ADC) + GPS(UART)" } },
+    { "type": "wokwi-text", "id": "lbl2", "top": 130, "left": 90, "attrs": { "text": "Actuadores:\nOLED SSD1306 (I2C)\nWS2812B (GPIO25)\nServo SG90 (GPIO13)\nBuzzer (GPIO26)" } }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "oled:GND", "esp:GND.1", "black", [ "h-38.4", "v-124.8" ] ],
+    [ "oled:VCC", "esp:3V3", "red", [ "h-19.2", "v-124.8" ] ],
+    [ "oled:SDA", "esp:21", "blue", [ "h28.8", "v-182.4" ] ],
+    [ "oled:SCL", "esp:22", "green", [ "h48", "v-182.4" ] ],
+    [ "dht:GND", "esp:GND.2", "black", [ "v76.8", "h-134.4" ] ],
+    [ "dht:VCC", "esp:3V3", "red", [ "v76.8", "h-134.4" ] ],
+    [ "dht:SDA", "esp:15", "green", [ "v76.8", "h-105.6" ] ],
+    [ "strip:VDD", "esp:5V", "red", [ "h-19.2", "v0" ] ],
+    [ "strip:VSS", "esp:GND.3", "black", [ "h-38.4", "v0" ] ],
+    [ "strip:DIN", "esp:25", "green", [ "h-28.8", "v-38.4" ] ],
+    [ "pot:VCC", "esp:3V3", "red", [ "h-19.2", "v0" ] ],
+    [ "pot:SIG", "esp:34", "orange", [ "h-9.6", "v-86.4" ] ],
+    [ "pot:GND", "esp:GND.1", "black", [ "h-38.4", "v0" ] ],
+    [ "servo1:PWM", "esp:13", "orange", [ "h28.8", "v-230.4" ] ],
+    [ "servo1:V+", "esp:5V", "red", [ "h28.8", "v-192" ] ],
+    [ "servo1:GND", "esp:GND.3", "black", [ "v-57.6", "h148.76" ] ],
+    [ "bz1:1", "esp:26", "purple", [ "h0" ] ],
+    [ "bz1:2", "esp:GND.3", "black", [ "h0" ] ]
+  ],
+  "dependencies": {}
+}
