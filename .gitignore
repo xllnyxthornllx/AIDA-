@@ -17,3 +17,6 @@ secrets.h
 CREDENCIALES.local.md
 **/CREDENCIALES.local.md
 evidencias-local/
+
+# Config local de Obsidian
+.obsidian/
