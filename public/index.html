@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AIDA+ | Hito N° 2 — Seguimiento Oficial</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="aida-mark.svg?v=16" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=16">
-  <link rel="stylesheet" href="aida-twin.css?v=16">
+  <link rel="icon" href="aida-mark.svg?v=18" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css?v=18">
+  <link rel="stylesheet" href="aida-twin.css?v=18">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -55,6 +55,7 @@
         <a href="#gantt">Cronograma</a>
         <a href="#kanban">Kanban</a>
         <a href="#evidencias">Evidencias</a>
+        <a href="#lab09">Laboratorio 9</a>
         <a href="#equipo">Equipo</a>
         <button id="auth-btn" class="auth-btn" aria-expanded="false" aria-controls="auth-modal"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Iniciar sesión</span></button>
         <button id="theme-toggle" class="icon-btn" aria-label="Cambiar tema" aria-pressed="true"><svg class="icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg><svg class="icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
@@ -153,6 +154,70 @@
       </div>
     </section>
 
+    <section id="lab09" class="section" aria-labelledby="lab09-title">
+      <div class="container">
+        <div class="section-head reveal">
+          <div><h2 id="lab09-title">Laboratorio 9 — Proyecto de Semestre</h2><p class="section-sub">Despliegue real en VPS propia · ESP32 (FreeRTOS) + Mosquitto + Node-RED Dashboard 2.0</p></div>
+          <span class="badge">Evidencias con etiqueta <strong>Lab09</strong></span>
+        </div>
+
+        <div class="lab-grid">
+          <article class="glass-card reveal">
+            <h3>Parámetros de conexión</h3>
+            <p>Datos usados por el firmware del ESP32 y por el dashboard, verificados de extremo a extremo.</p>
+            <table class="lab-table">
+              <tbody>
+                <tr><th>Broker MQTT</th><td><code>54.94.50.247:1883</code></td></tr>
+                <tr><th>Usuario / clave</th><td><code>aida</code> / <code>AidaLab9_2026</code></td></tr>
+                <tr><th>Tópico de subida</th><td><code>aida/telemetry</code> · QoS 0 · cada 3 s</td></tr>
+                <tr><th>Tópico de bajada</th><td><code>aida/commands</code> · QoS 0 · por evento</td></tr>
+                <tr><th>Editor Node-RED</th><td><code>http://54.94.50.247:1880</code></td></tr>
+                <tr><th>Dashboard</th><td><code>/ui</code> → página <strong>AIDA+ LAB 9</strong></td></tr>
+                <tr><th>WiFi del simulador</th><td><code>Wokwi-GUEST</code></td></tr>
+              </tbody>
+            </table>
+            <div class="chip-row"><span class="chip">ESP32</span><span class="chip">FreeRTOS</span><span class="chip">PubSubClient</span><span class="chip">Mosquitto 2.0.22</span><span class="chip">Node-RED 4.1.15</span><span class="chip">Dashboard 2.0</span></div>
+            <div class="lab-actions">
+              <a class="btn-primary small" href="http://54.94.50.247:1880/ui" target="_blank" rel="noopener">Abrir dashboard</a>
+              <a class="btn-ghost small" href="https://github.com/xllnyxthornllx/AIDA-/tree/main/content" target="_blank" rel="noopener">Ver código y UML</a>
+            </div>
+          </article>
+
+          <article class="glass-card reveal">
+            <h3>Componentes verificados en la VPS</h3>
+            <p>Auditoría previa del servidor: <strong>no fue necesario instalar nada</strong>, sólo configuración mínima.</p>
+            <table class="lab-table">
+              <tbody>
+                <tr><th>Sistema operativo</th><td>Ubuntu 26.04 LTS (familia Debian)</td></tr>
+                <tr><th>Broker</th><td>Eclipse Mosquitto 2.0.22 · <code>allow_anonymous false</code> + ACL</td></tr>
+                <tr><th>Node-RED</th><td>4.1.15 · Node v20.20.2 / npm 10.8.2</td></tr>
+                <tr><th>Dashboard</th><td><code>@flowfuse/node-red-dashboard</code> 1.33.0</td></tr>
+                <tr><th>Firewall</th><td>UFW (1880, 1883) + Security Group de AWS</td></tr>
+                <tr><th>Flows previos</th><td>Preservados · 134 → 159 nodos</td></tr>
+                <tr><th>Firmware</th><td>Compila en PlatformIO · RAM 14.1 % · Flash 62.5 %</td></tr>
+              </tbody>
+            </table>
+          </article>
+
+          <article class="glass-card reveal lab-wide">
+            <h3>Checklist de evidencias del laboratorio</h3>
+            <p>Sube cada captura en <a href="#evidencias">Evidencias</a> usando la etiqueta <code>Lab09</code> y el número de evidencia indicado.</p>
+            <ul class="lab-check">
+              <li><span>1</span>Sensores y hardware del proyecto (foto real o catálogo de piezas en Wokwi)</li>
+              <li><span>2</span>Consola serial del ESP32 con las lecturas de sensores y la publicación MQTT</li>
+              <li><span>3</span>Bloque <code>debug</code> de Node-RED recibiendo las tramas JSON de <code>aida/telemetry</code></li>
+              <li><span>4</span>Dashboard de sensores: gauges de temperatura y humedad, mapa GPS y estado</li>
+              <li><span>5</span>Actuadores: diagrama en Wokwi con OLED SSD1306, tira WS2812B, servo y buzzer</li>
+              <li><span>6</span>Control desde el dashboard: botones de estado, slider del servo y color RGB con respuesta del ESP32</li>
+              <li><span>7</span>Log del broker: cliente <code>u'aida'</code> conectado y entrega de la telemetría a Node-RED</li>
+              <li><span>8</span>Diagramas UML de bloques, de estados y de secuencia</li>
+              <li><span>9</span>Enlace del video de demostración pegado en el documento del laboratorio</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
     <section id="equipo" class="section" aria-labelledby="equipo-title">
       <div class="container">
         <div class="section-head reveal">
@@ -166,7 +231,7 @@
   <footer role="contentinfo">
     <div class="container footer-inner">
       <p><strong>AIDA+</strong> — Tecsup Arequipa · Implementación de Tecnologías Emergentes</p>
-      <p>Docente auditor: <code>rllerenad@tecsup.edu.pe</code> · © 2026 · <span id="app-version">v16</span></p>
+      <p>Docente auditor: <code>rllerenad@tecsup.edu.pe</code> · © 2026 · <span id="app-version">v18</span></p>
     </div>
   </footer>
 
@@ -211,7 +276,7 @@
         <input type="text" id="ev-title" placeholder="Título (ej. Prueba OLED)" required>
         <input type="text" id="ev-desc" placeholder="Descripción">
         <input type="text" id="ev-tag" placeholder="Etiqueta (Hardware / Docs / Diseño)" list="tags">
-        <datalist id="tags"><option>Hardware</option><option>Docs</option><option>Diseño</option><option>Redes</option><option>IA</option><option>Pruebas</option></datalist>
+        <datalist id="tags"><option>Lab09</option><option>Hardware</option><option>Docs</option><option>Diseño</option><option>Redes</option><option>IA</option><option>Pruebas</option></datalist>
         <label class="drive-file-label" for="ev-file">📎 Subir archivo a Drive <small>(foto, PDF, doc — máx 25 MB · requiere entrar con Google)</small></label>
         <p id="drive-conn" class="drive-conn"></p>
         <button type="button" id="drive-reconnect" class="btn-ghost hidden">🔌 Reconectar Drive</button>
@@ -248,8 +313,8 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-  <script src="firebase-config.js?v=16" defer></script>
-  <script src="aida-twin.js?v=16" defer></script>
-  <script src="app.js?v=16" defer></script>
+  <script src="firebase-config.js?v=18" defer></script>
+  <script src="aida-twin.js?v=18" defer></script>
+  <script src="app.js?v=18" defer></script>
 </body>
 </html>
