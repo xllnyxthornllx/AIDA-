@@ -340,7 +340,10 @@ static void ensureWifi() {
   Serial.print("[WiFi] conectando a ");
   Serial.println(WIFI_SSID);
   WiFi.mode(WIFI_STA);
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  // En Wokwi, indicar el canal 6 evita el escaneo inicial (~4 s menos de arranque).
+  // Con cualquier otro SSID (hardware real) se usa el escaneo normal.
+  if (strcmp(WIFI_SSID, "Wokwi-GUEST") == 0) WiFi.begin(WIFI_SSID, WIFI_PASS, 6);
+  else                                       WiFi.begin(WIFI_SSID, WIFI_PASS);
   while (WiFi.status() != WL_CONNECTED) {
     vTaskDelay(pdMS_TO_TICKS(500));
     Serial.print(".");

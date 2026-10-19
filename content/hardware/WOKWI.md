@@ -17,6 +17,18 @@ PlatformIO, así que lo que se ve en el simulador es el firmware real que se eva
 Extensiones recomendadas (ya declaradas en `.vscode/extensions.json`):
 `platformio.platformio-ide` y `wokwi.wokwi-vscode`.
 
+### Gateway de Internet (gratis, y es lo único que hace falta)
+
+Wokwi conecta el ESP32 simulado a Internet a través de un *gateway*. El **Public Gateway**
+viene activo por defecto y **funciona con cuenta gratuita**: permite conexiones
+**salientes**, que es justo lo que necesita el proyecto para publicar en el broker.
+Sus límites: es más lento y Wokwi monitorea el tráfico (no usar con datos sensibles).
+
+El **Private Gateway** (solo planes de pago) únicamente hace falta para conexiones
+**entrantes** o para llegar a tu red local; aquí **no** se necesita.
+
+> El ESP32 recibe la IP `10.10.0.2` con el Public Gateway (o `10.13.37.2` con el privado).
+
 ## 2. Credenciales (`include/secrets.h`)
 
 El repositorio **no** incluye credenciales. Copia la plantilla y complétala:
@@ -60,7 +72,7 @@ con `#warning "include/secrets.h no encontrado..."`, pero no se conectará al br
  Comandos    : aida/commands
 =====================================================
 [WiFi] conectando a Wokwi-GUEST
-[WiFi] conectado · IP: 10.0.0.2
+[WiFi] conectado · IP: 10.10.0.2
 [MQTT] conectando a 54.94.50.247:1883 como 'aida'...
 [MQTT] conectado al broker Mosquitto (VPS)
 [MQTT] suscrito a aida/commands
