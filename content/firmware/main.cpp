@@ -40,14 +40,23 @@
 #include <TinyGPS++.h>
 #include <ESP32Servo.h>
 
-/* ───────────────────────── Configuracion de red ───────────────────────── */
-#define WIFI_SSID     "Wokwi-GUEST"
-#define WIFI_PASS     ""
+/* ───────────────────── Configuracion de red (credenciales) ─────────────────────
+ *  Las credenciales NO se versionan: viven en include/secrets.h (ignorado por git).
+ *  Copia include/secrets.example.h a include/secrets.h y completa tus valores.
+ *  Si secrets.h no existe, el sketch compila con valores de ejemplo (no conectara).
+ */
+#if __has_include("secrets.h")
+  #include "secrets.h"
+#else
+  #warning "include/secrets.h no encontrado: compilando con credenciales de ejemplo"
+  #define WIFI_SSID     "Wokwi-GUEST"
+  #define WIFI_PASS     ""
+  #define MQTT_HOST     "0.0.0.0"
+  #define MQTT_PORT     1883
+  #define MQTT_USER     "usuario"
+  #define MQTT_PASS     "clave"
+#endif
 
-#define MQTT_HOST     "54.94.50.247"   // VPS AWS · Mosquitto
-#define MQTT_PORT     1883
-#define MQTT_USER     "aida"
-#define MQTT_PASS     "AidaLab9_2026"
 #define MQTT_CLIENT   "aida-esp32-lab9"
 
 #define TOPIC_TELEMETRY "aida/telemetry"

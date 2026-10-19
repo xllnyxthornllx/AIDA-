@@ -33,7 +33,7 @@
 |---|---|
 | Broker MQTT | `54.94.50.247:1883` |
 | Usuario MQTT | `aida` |
-| Password MQTT | `AidaLab9_2026` |
+| Password MQTT | *(no se publica; está en `include/secrets.h` del firmware y en la entrega al docente)* |
 | Tópico de subida | `aida/telemetry` (QoS 0, cada 3 s) |
 | Tópico de bajada | `aida/commands` (QoS 0) |
 | Editor Node-RED | `http://54.94.50.247:1880` |
@@ -42,6 +42,12 @@
 > ⚠️ El dashboard y los nodos `http` están protegidos por `httpNodeAuth` en
 > `~/.node-red/settings.js` (usuario `nyxthorn`). Al abrir `/ui` el navegador pedirá
 > usuario y contraseña.
+
+> 🔒 **Manejo de credenciales.** La contraseña MQTT **no se publica** en este
+> repositorio ni en el portal: en el firmware se declara en `include/secrets.h`
+> (ignorado por git, plantilla en `include/secrets.example.h`) y por CLI se inyecta
+> con la variable `$MQTT_PASS`. Los valores reales se entregan al docente por
+> separado.
 
 ---
 
@@ -73,7 +79,7 @@ también estaba abierto (comprobado con `Test-NetConnection` desde el cliente).
 ### 3.1 Usuario MQTT dedicado a AIDA+
 
 ```bash
-sudo mosquitto_passwd -b /etc/mosquitto/passwd aida 'AidaLab9_2026'
+sudo mosquitto_passwd -b /etc/mosquitto/passwd aida '<CLAVE_MQTT>'
 ```
 
 Usuarios existentes que se **preservaron**: `iotuser`, `nyxthorn`, `magaly`,
@@ -99,9 +105,10 @@ topic readwrite aida/#
 ```bash
 sudo systemctl restart mosquitto
 
-# prueba autenticada (debe funcionar)
-mosquitto_sub -h localhost -u aida -P 'AidaLab9_2026' -t 'aida/#' -C 1 &
-mosquitto_pub -h localhost -u aida -P 'AidaLab9_2026' -t 'aida/telemetry' \
+# prueba autenticada (debe funcionar) — define primero tu clave
+export MQTT_PASS='<CLAVE_MQTT>'
+mosquitto_sub -h localhost -u aida -P "$MQTT_PASS" -t 'aida/#' -C 1 &
+mosquitto_pub -h localhost -u aida -P "$MQTT_PASS" -t 'aida/telemetry' \
   -m '{"temp":24.5,"hum":48.2,"lat":-16.409,"lon":-71.537,"state":"listening"}'
 
 # prueba anónima (debe ser rechazada)
@@ -163,7 +170,7 @@ Internet).
 
 ```bash
 # 1) publicar como lo hace el ESP32, usando la IP PÚBLICA
-mosquitto_pub -h 54.94.50.247 -u aida -P 'AidaLab9_2026' \
+mosquitto_pub -h 54.94.50.247 -u aida -P "$MQTT_PASS" \
   -t 'aida/telemetry' \
   -m '{"temp":24.5,"hum":48.2,"lat":-16.409,"lon":-71.537,"state":"listening"}'
 

@@ -499,6 +499,7 @@ Se organiza en **14 tipos de diagrama**, agrupados en dos grandes familias:
 | Archivo | Contenido |
 |---|---|
 | `content/firmware/main.cpp` | Firmware ESP32 (FreeRTOS + PubSubClient + ArduinoJson + periféricos) |
+| `content/firmware/secrets.example.h` | Plantilla de credenciales (el `secrets.h` real **no** se versiona) |
 | `content/firmware/platformio.ini` | Configuración PlatformIO y dependencias |
 | `content/hardware/diagram.json` | Diagrama de conexiones para el simulador Wokwi |
 | `content/hardware/wokwi.toml` | Configuración de Wokwi (firmware/elf) |
@@ -513,7 +514,15 @@ Se organiza en **14 tipos de diagrama**, agrupados en dos grandes familias:
 | Parámetro | Valor |
 |---|---|
 | Broker MQTT | `54.94.50.247:1883` |
-| Usuario / Password | `aida` / `AidaLab9_2026` |
+| Usuario / Password | `aida` / *(contraseña no publicada — se entrega al docente por separado)* |
+| WiFi del simulador | `Wokwi-GUEST` (sin contraseña) |
+
+> 🔒 **Manejo de credenciales.** Al publicar el proyecto en un repositorio público, la
+> contraseña del broker **se sacó del código**: el firmware lee `include/secrets.h`
+> (ignorado por `git`, plantilla en `secrets.example.h`), y en los comandos de
+> verificación se inyecta por variable de entorno (`$MQTT_PASS`). Si `secrets.h` no
+> existe, el sketch compila con valores de ejemplo y avisa con un `#warning`; el
+> `main.cpp` publicado sigue siendo **compilable tal cual**.
 | Tópico subida | `aida/telemetry` |
 | Tópico bajada | `aida/commands` |
 | Editor Node-RED | `http://54.94.50.247:1880` |

@@ -10,3 +10,10 @@ Thumbs.db
 .netlify/
 dist/
 build/
+
+# Credenciales — NUNCA se versionan
+secrets.h
+**/secrets.h
+CREDENCIALES.local.md
+**/CREDENCIALES.local.md
+evidencias-local/
