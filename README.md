@@ -27,6 +27,7 @@ sensores ──> ESP32 (FreeRTOS) ──> Mosquitto (VPS) ──> Node-RED ─�
 | `content/hardware/` | Diagrama de Wokwi y guía para ejecutarlo |
 | `content/network/` | Guía de la VPS y flujo exportado de Node-RED |
 | `content/uml/` | Diagramas Mermaid: bloques, estados y secuencia |
+| `Lab 9 Tarea/` | Tarea del Laboratorio 9: sensores, actuadores, dashboards, UML, pruebas y evidencias |
 | `docs/` | Notas del proyecto |
 | `Lab09 - Subida del proyecto.docx.md` | Informe del Laboratorio 9 |
 
