@@ -12,10 +12,10 @@ Descentralizado y Adaptable), con las pruebas y evidencias de cada punto.
 | **1. Node-RED y Dashboard** (mostrar los valores de los sensores) | [03-dashboard-sensores.md](03-dashboard-sensores.md) |
 | **2. Actuadores a utilizar** (listado, características, protocolo, librerías) | [04-actuadores.md](04-actuadores.md) |
 | **2. Node-RED y Dashboard** (control: backend → mqtt → ESP32) | [05-dashboard-control.md](05-dashboard-control.md) |
-| **3. Diagrama UML de bloques y/o flujos** | [06-uml.md](06-uml.md) |
+| **3. Diagrama UML de bloques y/o flujos** (componentes, bloques, estados y secuencia) | [06-uml.md](06-uml.md) |
 | **Objetivo del proyecto** | [07-objetivo-problema-solucion.md](07-objetivo-problema-solucion.md) |
 | **Problema a solucionar** | [07-objetivo-problema-solucion.md](07-objetivo-problema-solucion.md) |
-| **Cómo soluciona** | [07-objetivo-problema-solucion.md](07-objetivo-problema-solucion.md) |
+| **Cómo soluciona** (con el diagrama UML de la implementación) | [07-objetivo-problema-solucion.md](07-objetivo-problema-solucion.md) |
 | **Pruebas y verificaciones** | [08-pruebas.md](08-pruebas.md) |
 | **Evidencias** (capturas) | [evidencias/](evidencias/) |
 

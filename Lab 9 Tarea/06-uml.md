@@ -1,103 +1,183 @@
 # 3. Diagrama UML de bloques y/o flujos
 
-## 3.1 Diagrama de bloques
+La implementación de la solución se muestra con **cuatro vistas UML** complementarias:
+
+| Vista | Archivo fuente | Qué responde |
+|---|---|---|
+| **Componentes** | [`uml_aida_componentes.mmd`](../content/uml/uml_aida_componentes.mmd) | ¿Cómo está implementada la solución? |
+| **Bloques y flujo de datos** | [`uml_aida_bloques.mmd`](../content/uml/uml_aida_bloques.mmd) | ¿Qué bloques hay y qué datos viajan entre ellos? |
+| **Flujo de estados** | [`uml_aida_flujo_estados.mmd`](../content/uml/uml_aida_flujo_estados.mmd) | ¿Qué estados tiene el asistente y qué los cambia? |
+| **Secuencia** | [`uml_aida_secuencia.mmd`](../content/uml/uml_aida_secuencia.mmd) | ¿En qué orden viajan los mensajes? |
+
+## 3.1 Diagrama de componentes — implementación de la solución
 
 ```mermaid
 flowchart TB
-    subgraph CAMPO["Entorno del usuario"]
-        V["Voz del usuario"]
-    end
-    subgraph EDGE["ESP32 DevKit - FreeRTOS"]
-        SENS["<b>TaskSensors</b> · Core 1<br/>DHT22 · Voz(ADC) · GPS(UART)"]
-        QUEUE["Cola FreeRTOS"]
-        MQTT_T["<b>TaskMQTT</b> · Core 0<br/>WiFi + PubSubClient + JSON"]
-        ACT["<b>Actuadores</b><br/>OLED · WS2812B · Servo · Buzzer"]
-        SENS --> QUEUE --> MQTT_T --> ACT
-    end
-    subgraph CLOUD["VPS AWS (Ubuntu 26.04)"]
-        BROKER["<b>Eclipse Mosquitto</b><br/>:1883 · auth + ACL"]
-        NR["<b>Node-RED 4.1.15</b><br/>:1880 · Dashboard 2.0"]
-    end
-    UI["Dashboard AIDA+ LAB 9<br/>gauges · mapa · botones · slider"]
-    DEV["Nodo debug"]
+    USUARIO(["«actor» Usuario del hogar"])
 
-    V --> SENS
-    MQTT_T -- "publish aida/telemetry" --> BROKER
-    BROKER -- "subscribe" --> NR
-    NR --> UI
-    NR --> DEV
-    UI -- "acciones" --> NR
-    NR -- "publish aida/commands" --> BROKER
-    BROKER -- "subscribe" --> MQTT_T
-    MQTT_T -- "callback" --> ACT
+    subgraph NODO["«nodo» ESP32 DevKit v1 · firmware FreeRTOS"]
+        direction TB
+        TS["«tarea» TaskSensors<br/>Core 1 · prioridad 1<br/>DHT22 · voz (ADC) · GPS (UART)"]
+        COLA["«buffer» telemetryQueue<br/>tamano 1 · xQueueOverwrite / xQueuePeek"]
+        TM["«tarea» TaskMQTT<br/>Core 0 · prioridad 2<br/>WiFi + PubSubClient + ArduinoJson"]
+        MTX["«mutex» stateMutex"]
+        FSM["«maquina de estados» AidaState<br/>idle · listening · processing · speaking"]
+        ACT["«actuadores»<br/>OLED SSD1306 (I2C)<br/>WS2812B (1-Wire)<br/>SG90 y buzzer (PWM)"]
+    end
+
+    subgraph VPS["«nodo» VPS AWS · Ubuntu LTS"]
+        BROKER["«broker MQTT» Eclipse Mosquitto :1883<br/>autenticacion y ACL"]
+        NR["«aplicacion» Node-RED :1880<br/>Dashboard 2.0 y nodo debug<br/>muestra gauges, mapa y estado"]
+    end
+
+    USUARIO -- "habla" --> TS
+    USUARIO -- "opera el panel" --> NR
+    TS -- "escribe la muestra" --> COLA
+    COLA -- "publica la ultima muestra" --> TM
+    TM -- "aplica el comando" --> ACT
+    MTX -.->|protege| FSM
+    TM -.->|lee el estado| FSM
+    TM -- "aida/telemetry" --> BROKER
+    BROKER -- "entrega QoS 0" --> NR
+    NR -- "aida/commands" --> BROKER
+    BROKER -- "entrega el comando" --> TM
 ```
 
-## 3.2 Diagrama de flujo de estados (comportamiento del asistente)
+**Cómo se lee:** el nodo de borde contiene **dos componentes** (`TaskSensors` y `TaskMQTT`)
+unidos por un **buffer** y con la **máquina de estados** protegida por un **mutex**; las dos
+interfaces que los comunican con el servidor son los tópicos `aida/telemetry` y
+`aida/commands` sobre el **broker propio** de la VPS.
+
+## 3.2 Diagrama de bloques y flujo de datos
+
+```mermaid
+flowchart TB
+    subgraph CAMPO["Entorno del usuario (Arequipa)"]
+        V["Voz del usuario<br/>captura por microfono"]
+        P["Presencia y contexto"]
+    end
+
+    subgraph EDGE["Nodo Edge - ESP32 DevKit (FreeRTOS)"]
+        SENS["TaskSensors - Core 1<br/>DHT22 temp/humedad<br/>Microfono MAX9814 ADC<br/>GPS NEO-6M UART"]
+        QUEUE["Cola FreeRTOS<br/>xQueueOverwrite"]
+        MQTT_T["TaskMQTT - Core 0<br/>WiFi STA + PubSubClient<br/>JSON cada 3 s"]
+        ACT["Actuadores<br/>OLED SSD1306 I2C<br/>Tira WS2812B<br/>Servo SG90 PWM<br/>Buzzer"]
+        SENS --> QUEUE --> MQTT_T
+        MQTT_T --> ACT
+    end
+
+    subgraph CLOUD["VPS AWS - Ubuntu (familia Debian)"]
+        BROKER["Eclipse Mosquitto 2.0<br/>:1883 con auth y ACL<br/>topico aida/#"]
+        NR["Node-RED 4.1.15<br/>:1880<br/>Dashboard 2.0 en /ui"]
+    end
+
+    subgraph CLIENTE["Cliente"]
+        UI["Dashboard AIDA+ LAB 9<br/>gauges temp/humedad<br/>mapa GPS - estado<br/>botones - slider - color"]
+        DEV["Nodo debug<br/>muestra las tramas JSON"]
+    end
+
+    V --> SENS
+    P --> SENS
+    MQTT_T -- "publish aida/telemetry" --> BROKER
+    BROKER -- "subscribe aida/telemetry" --> NR
+    NR --> UI
+    NR --> DEV
+    UI -- "acciones del operador" --> NR
+    NR -- "publish aida/commands" --> BROKER
+    BROKER -- "subscribe aida/commands" --> MQTT_T
+    MQTT_T -- "callback segun comando" --> ACT
+```
+
+## 3.3 Diagrama de flujo de estados (comportamiento del asistente)
 
 ```mermaid
 stateDiagram-v2
     direction LR
     [*] --> Reposo
-    Reposo : idle — WS2812B cian · OLED ojos abiertos
-    Escuchando : listening — WS2812B azul · OLED ondas
-    Procesando : processing — WS2812B violeta · OLED "..."
-    Hablando : speaking — WS2812B verde · OLED boca animada
+
+    Reposo : Reposo (idle)
+    Reposo : WS2812B en cian
+    Reposo : OLED con ojos abiertos
+    Reposo : escucha pasiva del ADC de voz
+
+    Escuchando : Escuchando (listening)
+    Escuchando : WS2812B en azul
+    Escuchando : OLED con ondas sonoras
+    Escuchando : nivel de voz sobre el umbral
+
+    Procesando : Procesando IA (processing)
+    Procesando : WS2812B en violeta
+    Procesando : OLED mostrando texto pensando
+
+    Hablando : Hablando (speaking)
+    Hablando : WS2812B en verde
+    Hablando : OLED con boca animada
+    Hablando : reproduccion de audio
+
     Reposo --> Escuchando : voz detectada
-    Escuchando --> Procesando : fin de captura
+    Escuchando --> Procesando : fin de la captura
     Procesando --> Hablando : respuesta lista
     Hablando --> Reposo : audio finalizado
-    Escuchando --> Reposo : silencio / timeout
+    Escuchando --> Reposo : silencio o timeout
     Procesando --> Reposo : error de inferencia
+
+    note right of Reposo
+      Comando MQTT de respaldo por aida/commands
+      para forzar el estado desde el dashboard
+      con la clave state
+    end note
 ```
 
-## 3.3 Diagrama de secuencia (extremo a extremo)
+## 3.4 Diagrama de secuencia (extremo a extremo)
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant S as Sensores
+    participant S as Sensores (DHT22 / voz / GPS)
     participant E as ESP32 (FreeRTOS)
     participant M as Mosquitto (VPS)
     participant N as Node-RED
-    participant D as Dashboard
-    loop TaskSensors · Core 1 · 3 s
-        E->>S: leer temperatura, humedad, voz, GPS
-        S-->>E: valores
+    participant D as Dashboard 2.0
+
+    loop TaskSensors en Core 1
+        E->>S: leer temperatura, humedad, voz y GPS
+        S-->>E: valores de los sensores
+        E->>E: imprimir la trama en la consola serial
     end
-    loop TaskMQTT · Core 0 · 3 s
-        E->>M: PUBLISH aida/telemetry {temp,hum,lat,lon,voice,state}
-        M-->>N: entrega QoS 0
+
+    loop TaskMQTT en Core 0
+        E->>M: PUBLISH aida/telemetry con el JSON
+        M-->>N: entrega del mensaje QoS 0
         N->>D: actualiza gauges, textos y mapa
     end
-    D->>N: el operador pulsa un botón
-    N->>M: PUBLISH aida/commands {state|servo_angle|led_color}
+
+    D->>N: el operador pulsa un boton o mueve el slider
+    N->>M: PUBLISH aida/commands con el JSON
     M-->>E: entrega del comando
-    E->>E: callback → OLED + WS2812B + Servo + Buzzer
+    E->>E: callback aplica OLED, WS2812B, servo y buzzer
 ```
 
-> **Fuentes de los diagramas:** los archivos `.mmd` (formato Mermaid, renderizables en GitHub
-> y en Obsidian) están en el repositorio:
-> [`content/uml/uml_aida_bloques.mmd`](../content/uml/uml_aida_bloques.mmd),
-> [`content/uml/uml_aida_flujo_estados.mmd`](../content/uml/uml_aida_flujo_estados.mmd) y
-> [`content/uml/uml_aida_secuencia.mmd`](../content/uml/uml_aida_secuencia.mmd).
-> También están reunidos en [`content/uml/README.md`](../content/uml/README.md).
+> **Fuentes de los diagramas:** los cuatro archivos `.mmd` (formato Mermaid, renderizables en
+> GitHub y en Obsidian) están en [`content/uml/`](../content/uml/), reunidos también en
+> [`content/uml/README.md`](../content/uml/README.md).
 
-## Lectura de los diagramas
+## Cómo estos diagramas resuelven el enunciado
 
-- **Bloques:** muestra las tres capas del sistema (campo → borde → nube) y, dentro del ESP32,
-  las dos tareas FreeRTOS separadas por una cola, con los actuadores como salida del *callback*.
-- **Estados:** modela el comportamiento del asistente. Es la pieza que hace que los botones del
-  dashboard tengan sentido: cada comando lleva el sistema a un estado, y cada estado tiene una
-  representación concreta en luz, pantalla y sonido.
-- **Secuencia:** muestra el ciclo completo en el tiempo, incluido el lazo de control (dashboard
-  → broker → ESP32 → actuadores).
+| Problema | Dónde se ve la solución en el UML |
+|---|---|
+| Dependencia de la nube de un tercero | «nodo» VPS AWS con el **broker MQTT propio** (3.1) |
+| Un bucle secuencial que bloquea todo | Dos «tarea» sobre **dos núcleos** unidas por un «buffer» (3.1 y 3.2) |
+| Estado interno invisible | «maquina de estados» `AidaState` y su diagrama de flujo (3.1 y 3.3) |
+| No se puede accionar el sistema | Lazo cerrado `aida/commands` → callback → «actuadores» (3.1 y 3.4) |
 
 ## Evidencia
 
 **📷 Evidencia 8 — Diagramas UML renderizados**
 
-![Evidencia 8a — diagrama de bloques](evidencias/EVIDENCIA-8a-diagrama-bloques.png)
+![Evidencia 8a — diagrama de componentes](evidencias/EVIDENCIA-8a-componentes.png)
 
-![Evidencia 8b — flujo de estados](evidencias/EVIDENCIA-8b-flujo-estados.png)
+![Evidencia 8b — diagrama de bloques y flujo de datos](evidencias/EVIDENCIA-8b-bloques.png)
 
-![Evidencia 8c — diagrama de secuencia](evidencias/EVIDENCIA-8c-secuencia.png)
+![Evidencia 8c — flujo de estados](evidencias/EVIDENCIA-8c-estados.png)
+
+![Evidencia 8d — diagrama de secuencia](evidencias/EVIDENCIA-8d-secuencia.png)

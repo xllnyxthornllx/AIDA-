@@ -7,13 +7,48 @@ en GitHub.
 
 | Diagrama | Archivo | Qué responde |
 |---|---|---|
-| Bloques | [`uml_aida_bloques.mmd`](./uml_aida_bloques.mmd) | ¿Qué componentes hay y cómo se conectan? |
+| Componentes | [`uml_aida_componentes.mmd`](./uml_aida_componentes.mmd) | ¿Cómo está implementada la solución? |
+| Bloques y flujo de datos | [`uml_aida_bloques.mmd`](./uml_aida_bloques.mmd) | ¿Qué bloques hay y qué datos viajan entre ellos? |
 | Flujo de estados | [`uml_aida_flujo_estados.mmd`](./uml_aida_flujo_estados.mmd) | ¿Qué estados tiene el asistente y qué los cambia? |
 | Secuencia | [`uml_aida_secuencia.mmd`](./uml_aida_secuencia.mmd) | ¿En qué orden viajan los mensajes entre ESP32, broker y dashboard? |
 
 ---
 
-## 1. Diagrama de bloques
+## 1. Diagrama de componentes (implementación de la solución)
+
+```mermaid
+flowchart TB
+    USUARIO(["«actor» Usuario del hogar"])
+
+    subgraph NODO["«nodo» ESP32 DevKit v1 · firmware FreeRTOS"]
+        direction TB
+        TS["«tarea» TaskSensors<br/>Core 1 · prioridad 1<br/>DHT22 · voz (ADC) · GPS (UART)"]
+        COLA["«buffer» telemetryQueue<br/>tamano 1 · xQueueOverwrite / xQueuePeek"]
+        TM["«tarea» TaskMQTT<br/>Core 0 · prioridad 2<br/>WiFi + PubSubClient + ArduinoJson"]
+        MTX["«mutex» stateMutex"]
+        FSM["«maquina de estados» AidaState<br/>idle · listening · processing · speaking"]
+        ACT["«actuadores»<br/>OLED SSD1306 (I2C)<br/>WS2812B (1-Wire)<br/>SG90 y buzzer (PWM)"]
+    end
+
+    subgraph VPS["«nodo» VPS AWS · Ubuntu LTS"]
+        BROKER["«broker MQTT» Eclipse Mosquitto :1883<br/>autenticacion y ACL"]
+        NR["«aplicacion» Node-RED :1880<br/>Dashboard 2.0 y nodo debug<br/>muestra gauges, mapa y estado"]
+    end
+
+    USUARIO -- "habla" --> TS
+    USUARIO -- "opera el panel" --> NR
+    TS -- "escribe la muestra" --> COLA
+    COLA -- "publica la ultima muestra" --> TM
+    TM -- "aplica el comando" --> ACT
+    MTX -.->|protege| FSM
+    TM -.->|lee el estado| FSM
+    TM -- "aida/telemetry" --> BROKER
+    BROKER -- "entrega QoS 0" --> NR
+    NR -- "aida/commands" --> BROKER
+    BROKER -- "entrega el comando" --> TM
+```
+
+## 2. Diagrama de bloques y flujo de datos
 
 ```mermaid
 flowchart TB
@@ -53,7 +88,7 @@ flowchart TB
     MQTT_T -- "callback segun comando" --> ACT
 ```
 
-## 2. Diagrama de flujo de estados
+## 3. Diagrama de flujo de estados
 
 ```mermaid
 stateDiagram-v2
@@ -93,7 +128,7 @@ stateDiagram-v2
     end note
 ```
 
-## 3. Diagrama de secuencia
+## 4. Diagrama de secuencia
 
 ```mermaid
 sequenceDiagram

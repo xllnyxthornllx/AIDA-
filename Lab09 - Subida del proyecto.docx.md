@@ -323,7 +323,45 @@ en `aida/commands`; el mismo camino que sigue el comando hasta el ESP32.
 | **Problema a solucionar** | Los asistentes domésticos comerciales (Alexa, Google Home) **dependen de la nube de un tercero**: sin Internet dejan de funcionar, envían datos personales a servidores externos y no pueden adaptarse a necesidades específicas de un hogar (accesibilidad, idioma, privacidad). Además, un sistema de este tipo suele fallar cuando la adquisición de sensores y la comunicación de red se ejecutan en un **único bucle secuencial**: una lectura lenta o un broker caído bloquean todo el sistema. |
 | **Cómo soluciona** | Con una arquitectura **descentralizada de borde**: (1) un **broker Mosquitto propio** en la VPS del grupo, que el usuario controla; (2) un **ESP32 con FreeRTOS** que separa en **dos tareas sobre dos núcleos** la adquisición de sensores (Core 1) y la comunicación MQTT (Core 0), comunicadas por una **cola**, de modo que una red lenta nunca detiene la lectura; (3) un **dashboard Node-RED** que cierra el lazo de control publicando comandos MQTT que el ESP32 aplica sobre sus actuadores. El estado del asistente se modela explícitamente como una **máquina de estados**. |
 
-#### 3.1 Diagrama de bloques
+#### 3.1 Diagrama de componentes (implementación de la solución)
+
+```mermaid
+flowchart TB
+    USUARIO(["«actor» Usuario del hogar"])
+
+    subgraph NODO["«nodo» ESP32 DevKit v1 · firmware FreeRTOS"]
+        direction TB
+        TS["«tarea» TaskSensors<br/>Core 1 · prioridad 1<br/>DHT22 · voz (ADC) · GPS (UART)"]
+        COLA["«buffer» telemetryQueue<br/>tamano 1 · xQueueOverwrite / xQueuePeek"]
+        TM["«tarea» TaskMQTT<br/>Core 0 · prioridad 2<br/>WiFi + PubSubClient + ArduinoJson"]
+        MTX["«mutex» stateMutex"]
+        FSM["«maquina de estados» AidaState<br/>idle · listening · processing · speaking"]
+        ACT["«actuadores»<br/>OLED SSD1306 (I2C)<br/>WS2812B (1-Wire)<br/>SG90 y buzzer (PWM)"]
+    end
+
+    subgraph VPS["«nodo» VPS AWS · Ubuntu LTS"]
+        BROKER["«broker MQTT» Eclipse Mosquitto :1883<br/>autenticacion y ACL"]
+        NR["«aplicacion» Node-RED :1880<br/>Dashboard 2.0 y nodo debug<br/>muestra gauges, mapa y estado"]
+    end
+
+    USUARIO -- "habla" --> TS
+    USUARIO -- "opera el panel" --> NR
+    TS -- "escribe la muestra" --> COLA
+    COLA -- "publica la ultima muestra" --> TM
+    TM -- "aplica el comando" --> ACT
+    MTX -.->|protege| FSM
+    TM -.->|lee el estado| FSM
+    TM -- "aida/telemetry" --> BROKER
+    BROKER -- "entrega QoS 0" --> NR
+    NR -- "aida/commands" --> BROKER
+    BROKER -- "entrega el comando" --> TM
+```
+
+> Las dos interfaces que comunican el nodo de borde con el servidor son los tópicos
+> `aida/telemetry` y `aida/commands`; el estado se protege con un **mutex** y los actuadores
+> sólo los toca el *callback* de `TaskMQTT`.
+
+#### 3.2 Diagrama de bloques y flujo de datos
 
 ```mermaid
 flowchart TB
@@ -355,25 +393,47 @@ flowchart TB
     MQTT_T -- "callback" --> ACT
 ```
 
-#### 3.2 Diagrama de flujo de estados (comportamiento del asistente)
+#### 3.3 Diagrama de flujo de estados (comportamiento del asistente)
 
 ```mermaid
 stateDiagram-v2
     direction LR
     [*] --> Reposo
-    Reposo : 🟦 idle — WS2812B cian · OLED ojos abiertos
-    Escuchando : 🔵 listening — WS2812B azul · OLED ondas
-    Procesando : 🟣 processing — WS2812B violeta · OLED "..."
-    Hablando : 🟢 speaking — WS2812B verde · OLED boca animada
+
+    Reposo : Reposo (idle)
+    Reposo : WS2812B en cian
+    Reposo : OLED con ojos abiertos
+    Reposo : escucha pasiva del ADC de voz
+
+    Escuchando : Escuchando (listening)
+    Escuchando : WS2812B en azul
+    Escuchando : OLED con ondas sonoras
+    Escuchando : nivel de voz sobre el umbral
+
+    Procesando : Procesando IA (processing)
+    Procesando : WS2812B en violeta
+    Procesando : OLED mostrando texto pensando
+
+    Hablando : Hablando (speaking)
+    Hablando : WS2812B en verde
+    Hablando : OLED con boca animada
+    Hablando : reproduccion de audio
+
     Reposo --> Escuchando : voz detectada
-    Escuchando --> Procesando : fin de captura
+    Escuchando --> Procesando : fin de la captura
     Procesando --> Hablando : respuesta lista
     Hablando --> Reposo : audio finalizado
-    Escuchando --> Reposo : silencio / timeout
+    Escuchando --> Reposo : silencio o timeout
     Procesando --> Reposo : error de inferencia
+
+    note right of Reposo
+      Comando MQTT de respaldo por aida/commands
+      para forzar el estado desde el dashboard
+      con la clave state
+    end note
 ```
 
-#### 3.3 Diagrama de secuencia (extremo a extremo)
+#### 3.4 Diagrama de secuencia (extremo a extremo)
 
 ```mermaid
 sequenceDiagram
@@ -399,8 +459,9 @@ sequenceDiagram
 ```
 
 > 📁 Los fuentes de los diagramas están en el repositorio:
-> `content/uml/uml_aida_bloques.mmd`, `content/uml/uml_aida_flujo_estados.mmd` y
-> `content/uml/uml_aida_secuencia.mmd` (formato **Mermaid**, renderizable en GitHub/Obsidian).
+> `content/uml/uml_aida_componentes.mmd`, `content/uml/uml_aida_bloques.mmd`,
+> `content/uml/uml_aida_flujo_estados.mmd` y `content/uml/uml_aida_secuencia.mmd`
+> (formato **Mermaid**, renderizable en GitHub/Obsidian).
 
 **📷 Evidencia 8 — Diagrama UML**
 > _Pegar captura de los diagramas renderizados (draw.io / Mermaid Live Editor / Obsidian)._

@@ -19,7 +19,7 @@ bloquean todo el sistema.
 
 ## Cómo soluciona
 
-Con una arquitectura **descentralizada de borde**:
+La solución implementada tiene cuatro piezas:
 
 1. Un **broker Mosquitto propio** en la VPS del grupo, que el usuario controla (no un servicio
    de terceros).
@@ -28,11 +28,46 @@ Con una arquitectura **descentralizada de borde**:
    una red lenta nunca detiene la lectura.
 3. Un **dashboard Node-RED** que cierra el **lazo de control**: los widgets publican comandos
    MQTT que el ESP32 aplica sobre sus actuadores.
-4. El estado del asistente se modela explícitamente como una **máquina de estados**
+4. El estado del asistente modelado explícitamente como una **máquina de estados**
    (`idle → listening → processing → speaking`), visible en la OLED, la tira LED y el dashboard.
 
-La implementación se muestra en los diagramas de bloques, de estados y de secuencia de
-[06-uml.md](06-uml.md).
+Y así se ve en el **diagrama UML de componentes** de la implementación:
+
+```mermaid
+flowchart TB
+    USUARIO(["«actor» Usuario del hogar"])
+
+    subgraph NODO["«nodo» ESP32 DevKit v1 · firmware FreeRTOS"]
+        direction TB
+        TS["«tarea» TaskSensors<br/>Core 1 · prioridad 1<br/>DHT22 · voz (ADC) · GPS (UART)"]
+        COLA["«buffer» telemetryQueue<br/>tamano 1 · xQueueOverwrite / xQueuePeek"]
+        TM["«tarea» TaskMQTT<br/>Core 0 · prioridad 2<br/>WiFi + PubSubClient + ArduinoJson"]
+        MTX["«mutex» stateMutex"]
+        FSM["«maquina de estados» AidaState<br/>idle · listening · processing · speaking"]
+        ACT["«actuadores»<br/>OLED SSD1306 (I2C)<br/>WS2812B (1-Wire)<br/>SG90 y buzzer (PWM)"]
+    end
+
+    subgraph VPS["«nodo» VPS AWS · Ubuntu LTS"]
+        BROKER["«broker MQTT» Eclipse Mosquitto :1883<br/>autenticacion y ACL"]
+        NR["«aplicacion» Node-RED :1880<br/>Dashboard 2.0 y nodo debug<br/>muestra gauges, mapa y estado"]
+    end
+
+    USUARIO -- "habla" --> TS
+    USUARIO -- "opera el panel" --> NR
+    TS -- "escribe la muestra" --> COLA
+    COLA -- "publica la ultima muestra" --> TM
+    TM -- "aplica el comando" --> ACT
+    MTX -.->|protege| FSM
+    TM -.->|lee el estado| FSM
+    TM -- "aida/telemetry" --> BROKER
+    BROKER -- "entrega QoS 0" --> NR
+    NR -- "aida/commands" --> BROKER
+    BROKER -- "entrega el comando" --> TM
+```
+
+El **comportamiento** del asistente (qué estado sigue a cuál) se muestra en el diagrama de
+estados, y el **orden temporal** de los mensajes en el diagrama de secuencia. Los tres están en
+[06-uml.md](06-uml.md), y sus fuentes `.mmd` en [`content/uml/`](../content/uml/).
 
 ## Relación problema → solución
 

@@ -15,7 +15,7 @@ esta misma carpeta con el nombre indicado.
 | 5 | Actuadores (diagrama de Wokwi / módulos reales) | [04-actuadores.md](../04-actuadores.md) | `EVIDENCIA-5-actuadores.png` | ⏳ pendiente de captura |
 | 6 | El ESP32 obedece al dashboard | [05-dashboard-control.md](../05-dashboard-control.md) | `EVIDENCIA-6-control-dashboard.png` | ⏳ pendiente de captura |
 | 7 | Log del broker Mosquitto (opcional) | [05-dashboard-control.md](../05-dashboard-control.md) | `EVIDENCIA-7-log-broker.png` | ⏳ pendiente de captura |
-| 8 | Diagramas UML renderizados (a, b, c) | [06-uml.md](../06-uml.md) | `EVIDENCIA-8a-…`, `8b-…`, `8c-…` | ✅ listas |
+| 8 | Diagramas UML renderizados (componentes, bloques, estados y secuencia) | [06-uml.md](../06-uml.md) | `EVIDENCIA-8a-componentes.png`, `8b-bloques.png`, `8c-estados.png`, `8d-secuencia.png` | ✅ listas |
 
 ## Qué debe mostrar cada captura pendiente
 
