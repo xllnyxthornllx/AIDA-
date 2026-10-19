@@ -1,37 +1,35 @@
-%%{init: {"theme":"base","themeVariables":{"primaryColor":"#0d1117","primaryTextColor":"#e6edf3","primaryBorderColor":"#00adb5","lineColor":"#58a6ff","fontSize":"14px"}}}%%
----
-title: AIDA+ · Laboratorio 9 — Máquina de estados del asistente
----
 stateDiagram-v2
     direction LR
     [*] --> Reposo
 
-    Reposo : 🟦 Reposo (idle)
-    Reposo : WS2812B = cian · OLED ojos abiertos
+    Reposo : Reposo (idle)
+    Reposo : WS2812B en cian
+    Reposo : OLED con ojos abiertos
     Reposo : escucha pasiva del ADC de voz
 
-    Escuchando : 🔵 Escuchando (listening)
-    Escuchando : WS2812B = azul · OLED ondas sonoras
-    Escuchando : nivel de voz > umbral
+    Escuchando : Escuchando (listening)
+    Escuchando : WS2812B en azul
+    Escuchando : OLED con ondas sonoras
+    Escuchando : nivel de voz sobre el umbral
 
-    Procesando : 🟣 Procesando IA (processing)
-    Procesando : WS2812B = violeta · OLED "..."
-    Procesando : inferencia / consulta al backend
+    Procesando : Procesando IA (processing)
+    Procesando : WS2812B en violeta
+    Procesando : OLED mostrando texto pensando
 
-    Hablando : 🟢 Hablando (speaking)
-    Hablando : WS2812B = verde · OLED boca animada
-    Hablando : reproducción de audio
+    Hablando : Hablando (speaking)
+    Hablando : WS2812B en verde
+    Hablando : OLED con boca animada
+    Hablando : reproduccion de audio
 
     Reposo --> Escuchando : voz detectada
-    Escuchando --> Procesando : fin de captura
+    Escuchando --> Procesando : fin de la captura
     Procesando --> Hablando : respuesta lista
     Hablando --> Reposo : audio finalizado
-    Escuchando --> Reposo : silencio / timeout
+    Escuchando --> Reposo : silencio o timeout
     Procesando --> Reposo : error de inferencia
 
     note right of Reposo
-      Comando MQTT de respaldo
-      aida/commands:
-      {"state":"idle"|"listening"|
-       "processing"|"speaking"}
+      Comando MQTT de respaldo por aida/commands
+      para forzar el estado desde el dashboard
+      con la clave state
     end note

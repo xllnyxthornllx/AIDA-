@@ -1,47 +1,35 @@
-%%{init: {"theme":"base","themeVariables":{"primaryColor":"#0d1117","primaryTextColor":"#e6edf3","primaryBorderColor":"#00adb5","lineColor":"#58a6ff","fontSize":"14px"}}}%%
----
-title: AIDA+ · Laboratorio 9 — Diagrama de bloques
----
 flowchart TB
-    subgraph CAMPO["🏠 Entorno del usuario (Arequipa)"]
-        V["🗣️ Voz del usuario<br/>(captura por micrófono)"]
-        P["👤 Presencia / contexto"]
+    subgraph CAMPO["Entorno del usuario (Arequipa)"]
+        V["Voz del usuario<br/>captura por microfono"]
+        P["Presencia y contexto"]
     end
 
-    subgraph EDGE["🧠 Nodo Edge — ESP32 DevKit (FreeRTOS)"]
-        direction TB
-        SENS["<b>TaskSensors</b> · Core 1<br/>─────────────<br/>• DHT22 (temp/humedad)<br/>• MAX9814 / INMP441 (voz, ADC/I2S)<br/>• NEO-6M GPS (UART)<br/>• pot. simulación de voz"]
-        QUEUE["Cola FreeRTOS<br/>(Telemetry x1)"]
-        MQTT_T["<b>TaskMQTT</b> · Core 0<br/>─────────────<br/>• WiFi STA (Wokwi-GUEST)<br/>• PubSubClient connect/sub<br/>• Serializa JSON / 3 s"]
-        ACT["<b>Actuadores</b><br/>─────────────<br/>• OLED SSD1306 (I2C)<br/>• WS2812B (1-Wire NZR)<br/>• Servo SG90 (PWM)<br/>• Buzzer / MAX98357A"]
+    subgraph EDGE["Nodo Edge - ESP32 DevKit (FreeRTOS)"]
+        SENS["TaskSensors - Core 1<br/>DHT22 temp/humedad<br/>Microfono MAX9814 ADC<br/>GPS NEO-6M UART"]
+        QUEUE["Cola FreeRTOS<br/>xQueueOverwrite"]
+        MQTT_T["TaskMQTT - Core 0<br/>WiFi STA + PubSubClient<br/>JSON cada 3 s"]
+        ACT["Actuadores<br/>OLED SSD1306 I2C<br/>Tira WS2812B<br/>Servo SG90 PWM<br/>Buzzer"]
         SENS --> QUEUE --> MQTT_T
         MQTT_T --> ACT
     end
 
-    subgraph CLOUD["☁️ VPS AWS (Ubuntu 26.04 LTS)"]
-        BROKER["<b>Eclipse Mosquitto 2.0</b><br/>:1883 · auth + ACL<br/>topic: aida/#"]
-        NR["<b>Node-RED 4.1.15</b><br/>:1880<br/>Dashboard 2.0 (:1880/ui)"]
+    subgraph CLOUD["VPS AWS - Ubuntu (familia Debian)"]
+        BROKER["Eclipse Mosquitto 2.0<br/>:1883 con auth y ACL<br/>topico aida/#"]
+        NR["Node-RED 4.1.15<br/>:1880<br/>Dashboard 2.0 en /ui"]
     end
 
-    subgraph CLIENTE["💻 Cliente"]
-        UI["📊 Dashboard AIDA+ LAB 9<br/>gauges · mapa GPS · botones<br/>color picker · slider servo"]
-        DEV["🔎 Nodo <b>debug</b><br/>(tramas JSON)"]
+    subgraph CLIENTE["Cliente"]
+        UI["Dashboard AIDA+ LAB 9<br/>gauges temp/humedad<br/>mapa GPS - estado<br/>botones - slider - color"]
+        DEV["Nodo debug<br/>muestra las tramas JSON"]
     end
 
     V --> SENS
     P --> SENS
-    MQTT_T -- "publish → aida/telemetry (JSON)" --> BROKER
+    MQTT_T -- "publish aida/telemetry" --> BROKER
     BROKER -- "subscribe aida/telemetry" --> NR
     NR --> UI
     NR --> DEV
     UI -- "acciones del operador" --> NR
-    NR -- "publish → aida/commands (JSON)" --> BROKER
+    NR -- "publish aida/commands" --> BROKER
     BROKER -- "subscribe aida/commands" --> MQTT_T
-    MQTT_T -- "callback: state / led_color / servo_angle" --> ACT
-
-    classDef edge fill:#0d1117,stroke:#00adb5,stroke-width:2px,color:#e6edf3
-    classDef cloud fill:#161b22,stroke:#58a6ff,stroke-width:2px,color:#e6edf3
-    classDef client fill:#1e1e1e,stroke:#00ff88,stroke-width:2px,color:#e6edf3
-    class SENS,QUEUE,MQTT_T,ACT edge
-    class BROKER,NR cloud
-    class UI,DEV client
+    MQTT_T -- "callback segun comando" --> ACT

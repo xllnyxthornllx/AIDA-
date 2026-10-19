@@ -1,29 +1,24 @@
-%%{init: {"theme":"base","themeVariables":{"primaryColor":"#0d1117","primaryTextColor":"#e6edf3","primaryBorderColor":"#00adb5","lineColor":"#58a6ff","fontSize":"14px"}}}%%
----
-title: AIDA+ · Laboratorio 9 — Secuencia extremo a extremo
----
 sequenceDiagram
     autonumber
-    participant S as Sensores (DHT22/GPS/Voz)
+    participant S as Sensores (DHT22 / voz / GPS)
     participant E as ESP32 (FreeRTOS)
     participant M as Mosquitto (VPS)
     participant N as Node-RED
     participant D as Dashboard 2.0
 
-    loop TaskSensors · Core 1 · cada 3 s
-        E->>S: leer temperatura, humedad, voz, GPS
-        S-->>E: valores analógicos / digitales
-        E->>E: imprimir en consola serial
+    loop TaskSensors en Core 1
+        E->>S: leer temperatura, humedad, voz y GPS
+        S-->>E: valores de los sensores
+        E->>E: imprimir la trama en la consola serial
     end
 
-    loop TaskMQTT · Core 0 · cada 3 s
-        E->>M: PUBLISH aida/telemetry {temp,hum,lat,lon,voice,state}
-        M-->>N: entrega del mensaje (QoS 0)
-        N->>D: actualiza gauges, textos y mapa GPS
+    loop TaskMQTT en Core 0
+        E->>M: PUBLISH aida/telemetry con el JSON
+        M-->>N: entrega del mensaje QoS 0
+        N->>D: actualiza gauges, textos y mapa
     end
 
-    D->>D: operador pulsa un botón / mueve slider / elige color
-    D->>N: msg con la acción
-    N->>M: PUBLISH aida/commands {state} | {servo_angle} | {led_color}
+    D->>N: el operador pulsa un boton o mueve el slider
+    N->>M: PUBLISH aida/commands con el JSON
     M-->>E: entrega del comando
-    E->>E: callback MQTT -> OLED + WS2812B + Servo + Buzzer
+    E->>E: callback aplica OLED, WS2812B, servo y buzzer
