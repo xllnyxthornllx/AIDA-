@@ -414,28 +414,80 @@ function initDropzone() {
   if (form) form.addEventListener('reset', () => setTimeout(paint, 0));
 
   paint();
+
+  // Conectar el botón "Entrar con Google" del modal de evidencias
+  const switchGoogleBtn = document.getElementById('ev-switch-google');
+  if (switchGoogleBtn) {
+    switchGoogleBtn.addEventListener('click', () => {
+      closeModal('evidence-modal');
+      openModal('auth-modal');
+      const googleBtn = document.getElementById('auth-google');
+      if (googleBtn) {
+        googleBtn.style.boxShadow = '0 0 0 3px var(--cyan), 0 0 20px var(--cyan)';
+        setTimeout(() => { googleBtn.style.boxShadow = ''; }, 4000);
+      }
+    });
+  }
 }
 
 // ===== PROGRESS =====
 function setProgressUI(val) {
   const fill = document.querySelector('.progress-fill');
-  const label = document.querySelector('.progress-label strong');
-  if (fill) fill.style.width = val + '%';
-  if (label) label.textContent = val + '%';
+  const label = document.getElementById('progress-value');
+  const bar = document.getElementById('progress-bar');
+  const v = Math.max(0, Math.min(100, Number(val) || 0));
+  if (fill) fill.style.width = v + '%';
+  if (label) label.textContent = v + '%';
+  if (bar) bar.setAttribute('aria-valuenow', v);
 }
 
 function initProgress() {
-  setProgressUI(localStorage.getItem('aida_progress') || '35');
+  // Leer de Firebase primero, luego localStorage
+  const applyProgress = (val) => {
+    if (val != null && val !== '') {
+      localStorage.setItem('aida_progress', val);
+      setProgressUI(val);
+    } else {
+      setProgressUI(localStorage.getItem('aida_progress') || '35');
+    }
+  };
+
+  // Intentar leer de Firebase
+  if (db) {
+    db.ref('progress/global').once('value', s => {
+      const v = s.val();
+      if (v && v.value != null) {
+        applyProgress(v.value);
+      } else {
+        applyProgress(localStorage.getItem('aida_progress') || '35');
+      }
+    }, () => {
+      applyProgress(localStorage.getItem('aida_progress') || '35');
+    });
+  } else {
+    applyProgress(localStorage.getItem('aida_progress') || '35');
+  }
+
   const pb = document.getElementById('update-progress-btn');
   if (pb) {
     pb.addEventListener('click', () => {
-      if (!currentUser) { toast('Inicia sesión para editar'); return; }
+      if (!currentUser) { toast('Inicia sesión para editar el progreso'); return; }
       const val = document.getElementById('progress-input').value;
-      if (val !== '' && val >= 0 && val <= 100) {
+      const num = Number(val);
+      if (val !== '' && !isNaN(num) && num >= 0 && num <= 100) {
         localStorage.setItem('aida_progress', val);
         setProgressUI(val);
-        if (db && currentUser) db.ref('progress/global').set({ value: Number(val), by: currentUser.email, at: Date.now() });
-        toast('Progreso actualizado: ' + val + '%');
+        if (db) {
+          db.ref('progress/global').set({ value: num, by: currentUser.email, at: Date.now() }, err => {
+            if (err) toast('Error al guardar progreso: ' + err.message);
+            else toast('Progreso actualizado: ' + val + '%');
+          });
+        } else {
+          toast('Progreso actualizado: ' + val + '%');
+        }
+        document.getElementById('progress-input').value = '';
+      } else {
+        toast('Ingresa un porcentaje válido (0-100)');
       }
     });
   }
@@ -835,7 +887,10 @@ function initAuth() {
     currentUser = user;
     updateAuthUI();
     paintDriveState();
-    if (user) subscribeDB();
+    if (user) {
+      subscribeDB();
+      initProgress();
+    }
   });
 
   subscribeDB();
@@ -854,7 +909,13 @@ function subscribeDB() {
       REMOTE_EVIDENCES = val ? Object.entries(val).map(([k, v]) => Object.assign({}, v, { _key: k })) : [];
       rebuildEvidences();
     }, err => console.warn('[DB] evidencias:', err.code || '', err.message));
-    db.ref('deletedEvidences').on('value', s => {
+    db.ref('progress/global').on('value', s => {
+      const v = s.val();
+      if (v && v.value != null) {
+        localStorage.setItem('aida_progress', v.value);
+        setProgressUI(v.value);
+      }
+    });
       const val = s.val();
       DELETED_KEYS = new Set(val ? Object.values(val).map(d => d && d.key).filter(Boolean) : []);
       rebuildEvidences();

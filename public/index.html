@@ -95,11 +95,13 @@
             <div class="stat" role="listitem"><strong><span data-count="35">0</span>%</strong><small>Avance</small></div>
           </div>
           <div class="progress-block">
-            <div class="progress-label">Progreso global <strong>35%</strong></div>
-            <div class="progress-bar" role="progressbar" aria-valuenow="35" aria-valuemin="0" aria-valuemax="100"><div class="progress-fill" style="width:35%"></div></div>
+            <div class="progress-label">Progreso global <strong id="progress-value">35%</strong></div>
+            <div class="progress-bar" role="progressbar" aria-valuenow="35" aria-valuemin="0" aria-valuemax="100" id="progress-bar"><div class="progress-fill" style="width:35%"></div></div>
             <div class="progress-control">
               <input type="number" id="progress-input" min="0" max="100" placeholder="%" aria-label="Porcentaje">
-              <button id="update-progress-btn" class="btn-primary small">Actualizar</button>
+              <button id="update-progress-btn" class="btn-primary small" type="button">Actualizar</button>
+            </div>
+        </div>>Actualizar</button>
             </div>
           </div>
           <div class="hero-actions">
@@ -304,7 +306,7 @@
           <span class="dz-hint">PNG, JPG, PDF, DOCX, ZIP o MP4 · máx 25 MB</span>
           <input type="file" id="ev-file" class="dz-input" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.mp4">
         </div>
-        <p id="ev-no-drive" class="ev-no-drive hidden">⚠️ Para subir archivos (imágenes, PDFs) necesitas entrar con <strong>Continuar con Google</strong>.<br>Si ya entraste con correo, cierra sesión y vuelve a entrar con Google.<br><em>Alternativa: sube el archivo a tu Google Drive y pega el link aquí abajo.</em></p>
+        <p id="ev-no-drive" class="ev-no-drive hidden">⚠️ Para subir archivos (imágenes, PDFs) necesitas entrar con <strong>Continuar con Google</strong>.<br>Si ya entraste con correo, cierra sesión y vuelve a entrar con Google.<br><em>Alternativa: sube el archivo a tu Google Drive y pega el link aquí abajo.</em><br><button type="button" id="ev-switch-google" class="btn-primary small" style="margin-top:8px">Entrar con Google para subir archivos</button></p>
         <div id="ev-file-info" class="dz-file hidden">
           <img id="ev-preview" alt="" hidden>
           <div class="dz-meta"><strong id="ev-file-name"></strong><small id="ev-file-size"></small></div>
