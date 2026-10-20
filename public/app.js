@@ -401,6 +401,7 @@ function initDropzone() {
   ['dragleave', 'dragend'].forEach(ev => drop.addEventListener(ev, () => drop.classList.remove('over')));
   drop.addEventListener('drop', e => {
     e.preventDefault(); e.stopPropagation(); drop.classList.remove('over');
+    if (drop.classList.contains('disabled')) return;
     const files = e.dataTransfer && e.dataTransfer.files;
     if (files && files.length) { input.files = files; paint(); }
   });
@@ -554,19 +555,27 @@ function driveStatus(msg, pct) {
 function paintDriveState() {
   const el = document.getElementById('drive-conn');
   const re = document.getElementById('drive-reconnect');
+  const drop = document.getElementById('ev-drop');
+  const noDrive = document.getElementById('ev-no-drive');
   if (!el) return;
   if (driveToken()) {
     el.textContent = 'Drive conectado ✓ — puedes subir archivos a la carpeta del equipo.';
     el.className = 'drive-conn ok';
     if (re) re.classList.add('hidden');
+    if (drop) { drop.classList.remove('disabled'); drop.removeAttribute('aria-disabled'); }
+    if (noDrive) noDrive.classList.add('hidden');
   } else if (isGoogleUser()) {
     el.textContent = 'Entraste con Google pero sin permiso de Drive. Pulsa "Reconectar Drive" y acepta el permiso.';
     el.className = 'drive-conn';
     if (re) re.classList.remove('hidden');
+    if (drop) { drop.classList.add('disabled'); drop.setAttribute('aria-disabled', 'true'); }
+    if (noDrive) noDrive.classList.remove('hidden');
   } else {
     el.textContent = 'Para subir archivos entra con "Continuar con Google" (otorga permiso de Drive). Con correo solo puedes pegar links.';
     el.className = 'drive-conn';
     if (re) re.classList.add('hidden');
+    if (drop) { drop.classList.add('disabled'); drop.setAttribute('aria-disabled', 'true'); }
+    if (noDrive) noDrive.classList.remove('hidden');
   }
 }
 

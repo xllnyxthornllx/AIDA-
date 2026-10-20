@@ -537,3 +537,10 @@ footer code { color:var(--cyan); font-family:'JetBrains Mono',monospace; }
 .evidence-body { align-items:flex-start; }
 .evidence-body p { width:100%; }
 .evidence-foot { margin-top:auto; display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+
+/* ===== Dropzone deshabilitado (sin token de Drive) ===== */
+.dropzone.disabled { opacity:.55; cursor:not-allowed; filter:grayscale(.4); }
+.dropzone.disabled .dz-input { pointer-events:none; }
+.ev-no-drive { margin:10px 0; padding:10px 12px; border:1px solid var(--cyan-border); border-radius:10px; background:var(--cyan-soft); color:var(--text); font-size:12.5px; line-height:1.5; }
+.ev-no-drive strong { color:var(--cyan); }
+.ev-no-drive em { color:var(--muted); font-style:normal; font-size:11.5px; }

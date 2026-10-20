@@ -304,13 +304,14 @@
           <span class="dz-hint">PNG, JPG, PDF, DOCX, ZIP o MP4 · máx 25 MB</span>
           <input type="file" id="ev-file" class="dz-input" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.mp4">
         </div>
+        <p id="ev-no-drive" class="ev-no-drive hidden">⚠️ Para subir archivos (imágenes, PDFs) necesitas entrar con <strong>Continuar con Google</strong>.<br>Si ya entraste con correo, cierra sesión y vuelve a entrar con Google.<br><em>Alternativa: sube el archivo a tu Google Drive y pega el link aquí abajo.</em></p>
         <div id="ev-file-info" class="dz-file hidden">
           <img id="ev-preview" alt="" hidden>
           <div class="dz-meta"><strong id="ev-file-name"></strong><small id="ev-file-size"></small></div>
           <button type="button" id="ev-file-clear" class="dz-clear" aria-label="Quitar archivo">&times;</button>
         </div>
         <div id="drive-status" class="drive-status" hidden><div class="drive-bar"><i></i></div><span></span></div>
-        <input type="text" id="ev-img" placeholder="…o pega un Link Drive / URL imagen / PDF">
+        <input type="text" id="ev-img" placeholder="📎 Pega aquí un link de Google Drive o URL de imagen/PDF (funciona sin cuenta de Google)">
         <button type="submit" id="ev-save" class="btn-primary">Guardar</button>
       </form>
     </div>
