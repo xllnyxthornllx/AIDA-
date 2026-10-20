@@ -25,9 +25,9 @@ let KANBAN_TASKS = [
 ];
 
 let EVIDENCES = [
-  { title:'Render 3D — AIDA+', desc:'Modelo digital del asistente creado en Fusion 360.', tag:'Diseño', img:'assets/images/render.png' },
-  { title:'Arquitectura del Sistema', desc:'Diagrama Nodo Central ↔ Esclavos ↔ Broker MQTT.', tag:'Docs', img:'assets/images/architecture.png' },
-  { title:'Esquema ESP32 — OLED I2C', desc:'Conexión SSD1306 SDA/SCL y alimentación 3.3V.', tag:'Hardware', img:'assets/images/wiring.png' }
+  { title:'Render 3D — AIDA+', desc:'Modelo digital del asistente creado en Fusion 360.', tag:'Diseño', img:'assets/images/render.svg' },
+  { title:'Arquitectura del Sistema', desc:'Diagrama Nodo Central ↔ Esclavos ↔ Broker MQTT.', tag:'Docs', img:'assets/images/architecture.svg' },
+  { title:'Esquema ESP32 — OLED I2C', desc:'Conexión SSD1306 SDA/SCL y alimentación 3.3V.', tag:'Hardware', img:'assets/images/wiring.svg' }
 ];
 
 let currentUser = null, db = null, auth = null, theme = 'dark';
@@ -36,13 +36,19 @@ const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
 let driveAccessToken = null;
 const BASE_EVIDENCES = EVIDENCES.map(e => Object.assign({}, e));
 let REMOTE_EVIDENCES = [];
-let DELETED_TITLES = new Set();
+let DELETED_KEYS = new Set();   // subidas eliminadas (por clave de Firebase)
 
 function rebuildEvidences() {
+  // Las tarjetas de ejemplo son contenido fijo: no se ocultan nunca.
+  // Las subidas se ocultan por su clave, no por el título (así se pueden
+  // subir dos evidencias con el mismo nombre sin que una tape a la otra).
+  const remote = REMOTE_EVIDENCES.filter(e => e && e._key && !DELETED_KEYS.has(e._key));
   const seen = new Set();
-  EVIDENCES = [...BASE_EVIDENCES, ...REMOTE_EVIDENCES].filter(e => {
-    if (!e || !e.title || DELETED_TITLES.has(e.title) || seen.has(e.title)) return false;
-    seen.add(e.title);
+  EVIDENCES = [...BASE_EVIDENCES, ...remote].filter(e => {
+    if (!e || !e.title) return false;
+    const id = e._key || ('base:' + e.title);
+    if (seen.has(id)) return false;
+    seen.add(id);
     return true;
   });
   renderEvidences();
@@ -52,6 +58,8 @@ function refreshEvidenceDeleteButtons() {
   const grid = document.getElementById('evidence-grid');
   if (grid) grid.classList.toggle('can-edit', !!currentUser);
   document.querySelectorAll('.evidence-card').forEach(card => {
+    // Las tarjetas de ejemplo (sin clave) no se pueden borrar.
+    if (!card.dataset.key) return;
     if (card.querySelector('.ev-del')) return;
     const b = document.createElement('button');
     b.className = 'ev-del';
@@ -66,39 +74,18 @@ function refreshEvidenceDeleteButtons() {
 
 function deleteEvidence(card) {
   if (!requireAuth()) return;
+  const key = card.dataset.key || '';
   const h4 = card.querySelector('h4');
   const title = h4 ? h4.textContent : '';
+  if (!key) { toast('Las tarjetas de ejemplo no se eliminan'); return; }
   if (!title || !confirm('¿Eliminar la evidencia "' + title + '"?')) return;
-  const remote = REMOTE_EVIDENCES.find(r => r.title === title);
-  if (db) {
-    if (remote && remote._key) db.ref('evidences/' + remote._key).remove();
-    db.ref('deletedEvidences').push({ title: title, by: currentUser.email, at: Date.now() });
-  } else {
-    DELETED_TITLES.add(title);
-    EVIDENCES = EVIDENCES.filter(x => x.title !== title);
-    renderEvidences();
-  }
+  if (!db) { toast('Sin conexión a Firebase'); return; }
+  db.ref('evidences/' + key).remove();
+  db.ref('deletedEvidences').push({ key: key, title: title, by: currentUser.email, at: Date.now() });
+  REMOTE_EVIDENCES = REMOTE_EVIDENCES.filter(r => r._key !== key);
+  DELETED_KEYS.add(key);
+  rebuildEvidences();
   toast('Evidencia eliminada');
-}
-
-// Si se guarda una evidencia con un título previamente eliminado, se "resucita":
-// sin esto, la tarjeta aparece un instante y desaparece al llegar el snapshot de borrados.
-async function undeleteTitle(title) {
-  DELETED_TITLES.delete(title);
-  if (!db || !title) return;
-  try {
-    // Con timeout: si la lectura se cuelga, no debe congelar el guardado
-    const s = await Promise.race([
-      db.ref('deletedEvidences').once('value'),
-      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 4000))
-    ]);
-    const val = s.val();
-    if (!val) return;
-    for (const [k, v] of Object.entries(val)) {
-      if (v && v.title === title) await db.ref('deletedEvidences/' + k).remove();
-    }
-    console.info('[Evidence] título resucitado:', title);
-  } catch (e) { console.warn('[Evidence] undelete (continúo igual):', e.message); }
 }
 
 // ===== TOAST =====
@@ -184,13 +171,29 @@ function evidenceMedia(e) {
   return { kind: 'image', thumb: raw, full: raw, link: raw };
 }
 
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
 function renderEvidences() {
   const grid = document.getElementById('evidence-grid');
+  if (!grid) return;
+  if (!EVIDENCES.length) {
+    grid.innerHTML = `<div class="evidence-empty">
+      <div class="evidence-empty-icon" aria-hidden="true">&#128193;</div>
+      <h3>Aun no hay evidencias</h3>
+      <p>Inicia sesion y sube la primera: un render, un esquema o una foto del avance.</p>
+    </div>`;
+    refreshEvidenceDeleteButtons();
+    return;
+  }
   grid.innerHTML = EVIDENCES.map((e0, i) => { const e = Object.assign({}, e0, evidenceMedia(e0)); return `
-    <div class="evidence-card" data-full="${e.full || ''}" data-link="${e.link || ''}" style="animation-delay:${i*0.07}s">
-      ${e.kind === 'doc' ? `<a class="evidence-doc" href="${e.link}" target="_blank" rel="noopener"><span class="doc-icon">DOC</span><span>${e.label || 'Abrir documento'}</span></a>` : `<img class="evidence-thumb" src="${e.thumb}" alt="${e.title}" loading="lazy" onerror="this.closest('.evidence-card').querySelector('.evidence-fallback').style.display='flex';this.remove()">`}
-      <div class="evidence-fallback" style="display:none"><a href="${e.link}" target="_blank" rel="noopener">Ver archivo</a></div>
-      <div class="evidence-body"><h4>${e.title}</h4><p>${e.desc}</p><span class="evidence-tag">#${e.tag}</span>${e.by ? `<small class="evidence-by">· ${e.by.split('@')[0]}</small>` : ''}</div>
+    <div class="evidence-card" role="listitem" data-key="${e._key || ''}" data-full="${e.full || ''}" data-link="${e.link || ''}" style="animation-delay:${i*0.07}s">
+      ${e.kind === 'doc'
+        ? `<a class="evidence-doc" href="${escapeHtml(e.link)}" target="_blank" rel="noopener"><span class="doc-icon">${e.icon === 'FOLDER' ? '&#128193;' : 'DOC'}</span><span>${escapeHtml(e.label || 'Abrir documento')}</span></a>`
+        : `<img class="evidence-thumb" src="${escapeHtml(e.thumb)}" alt="${escapeHtml(e.title)}" loading="lazy" onerror="this.closest('.evidence-card').querySelector('.evidence-fallback').style.display='flex';this.remove()"><span class="evidence-open" aria-hidden="true">Ver</span>`}
+      <div class="evidence-fallback" style="display:none"><a href="${escapeHtml(e.link)}" target="_blank" rel="noopener">Ver archivo</a></div>
+      <div class="evidence-body"><h4>${escapeHtml(e.title)}</h4><p>${escapeHtml(e.desc)}</p><span class="evidence-tag">#${escapeHtml(e.tag || 'General')}</span>${e.by ? `<small class="evidence-by">&middot; ${escapeHtml(String(e.by).split('@')[0])}</small>` : ''}</div>
     </div>`; }).join('');
   document.querySelectorAll('.evidence-card').forEach(card => {
     card.addEventListener('click', ev => {
@@ -214,6 +217,9 @@ function renderEvidences() {
     });
   });
   refreshEvidenceDeleteButtons();
+  // Si hay una busqueda activa, se reaplica despues de repintar.
+  const search = document.getElementById('evidence-search');
+  if (search && search.value.trim()) search.dispatchEvent(new Event('input'));
 }
 
 // ===== KANBAN DnD + FILTROS =====
@@ -349,6 +355,66 @@ function initEvidenceTools() {
   if (lv) lv.addEventListener('click', () => { grid.style.gridTemplateColumns = '1fr'; lv.setAttribute('aria-pressed', 'true'); gv.setAttribute('aria-pressed', 'false'); });
 }
 
+// ===== ZONA DE ARCHIVO (arrastrar y soltar) =====
+function initDropzone() {
+  const drop = document.getElementById('ev-drop');
+  const input = document.getElementById('ev-file');
+  if (!drop || !input) return;
+  const info = document.getElementById('ev-file-info');
+  const nameEl = document.getElementById('ev-file-name');
+  const sizeEl = document.getElementById('ev-file-size');
+  const prev = document.getElementById('ev-preview');
+  const clear = document.getElementById('ev-file-clear');
+  const MAX = 25 * 1024 * 1024;
+
+  const human = b => b < 1024 * 1024
+    ? Math.max(1, Math.round(b / 1024)) + ' KB'
+    : (b / 1024 / 1024).toFixed(1) + ' MB';
+
+  function paint() {
+    const f = input.files && input.files[0];
+    drop.classList.toggle('has-file', !!f);
+    if (!f) {
+      if (info) info.classList.add('hidden');
+      if (prev) { prev.hidden = true; prev.removeAttribute('src'); }
+      return;
+    }
+    if (nameEl) nameEl.textContent = f.name;
+    if (sizeEl) sizeEl.textContent = human(f.size) + (f.size > MAX ? ' · supera el maximo de 25 MB' : '');
+    if (info) info.classList.remove('hidden');
+    if (prev) {
+      if (/^image\//.test(f.type) || /\.(png|jpe?g|gif|webp)$/i.test(f.name)) {
+        prev.src = URL.createObjectURL(f);
+        prev.hidden = false;
+      } else {
+        prev.hidden = true;
+        prev.removeAttribute('src');
+      }
+    }
+  }
+
+  input.addEventListener('change', paint);
+
+  ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => {
+    e.preventDefault(); e.stopPropagation(); drop.classList.add('over');
+  }));
+  ['dragleave', 'dragend'].forEach(ev => drop.addEventListener(ev, () => drop.classList.remove('over')));
+  drop.addEventListener('drop', e => {
+    e.preventDefault(); e.stopPropagation(); drop.classList.remove('over');
+    const files = e.dataTransfer && e.dataTransfer.files;
+    if (files && files.length) { input.files = files; paint(); }
+  });
+  drop.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); }
+  });
+  if (clear) clear.addEventListener('click', e => { e.preventDefault(); input.value = ''; paint(); });
+
+  const form = document.getElementById('evidence-form');
+  if (form) form.addEventListener('reset', () => setTimeout(paint, 0));
+
+  paint();
+}
+
 // ===== PROGRESS =====
 function setProgressUI(val) {
   const fill = document.querySelector('.progress-fill');
@@ -442,23 +508,30 @@ function updateAuthUI() {
 }
 
 // ===== GOOGLE DRIVE UPLOAD (Drive API v3, carpeta del equipo) =====
+// El token de Drive caduca en ~1 h: si tiene mas de 50 min se descarta solo,
+// para no guardar evidencias con un token muerto.
+const DRIVE_TOKEN_TTL = 50 * 60 * 1000;
+
 function driveToken() {
   if (driveAccessToken) return driveAccessToken;
   try {
-    driveAccessToken = localStorage.getItem('drive_token') || sessionStorage.getItem('drive_token');
+    const t = localStorage.getItem('drive_token') || sessionStorage.getItem('drive_token');
+    const at = Number(localStorage.getItem('drive_token_at') || 0);
+    if (t && at && (Date.now() - at) > DRIVE_TOKEN_TTL) { clearDriveToken(); return null; }
+    driveAccessToken = t || null;
   } catch (e) {}
   return driveAccessToken;
 }
 
 function storeDriveToken(t) {
   driveAccessToken = t;
-  try { localStorage.setItem('drive_token', t); } catch (e) {}
+  try { localStorage.setItem('drive_token', t); localStorage.setItem('drive_token_at', String(Date.now())); } catch (e) {}
   try { sessionStorage.setItem('drive_token', t); } catch (e) {}
 }
 
 function clearDriveToken() {
   driveAccessToken = null;
-  try { localStorage.removeItem('drive_token'); } catch (e) {}
+  try { localStorage.removeItem('drive_token'); localStorage.removeItem('drive_token_at'); } catch (e) {}
   try { sessionStorage.removeItem('drive_token'); } catch (e) {}
 }
 
@@ -545,12 +618,22 @@ function uploadToDrive(file, onProgress) {
 
 function saveEvidence(ev, saveBtn, done) {
   console.info('[Evidence] guardando:', ev.title);
-  if (db) {
-    db.ref('evidences').push(ev, err => {
-      if (err) { console.error('[Evidence] push falló:', err.message); done(false); toast('Error al guardar: ' + err.message); }
-      else { console.info('[Evidence] push ok:', ev.title); done(true); }
-    });
-  } else { EVIDENCES.push(ev); renderEvidences(); done(true); }
+  if (!db) { EVIDENCES.push(ev); renderEvidences(); done(true); return; }
+  const ref = db.ref('evidences').push();
+  ref.set(ev, err => {
+    if (err) {
+      console.error('[Evidence] no se pudo guardar:', err.code || '', err.message);
+      done(false);
+      toast('Error al guardar: ' + (err.code === 'PERMISSION_DENIED' ? 'la base rechazó la escritura (revisa las reglas).' : err.message));
+      return;
+    }
+    console.info('[Evidence] guardado con clave', ref.key);
+    // Se pinta al instante; el listener de RTDB confirmará el mismo registro.
+    REMOTE_EVIDENCES = REMOTE_EVIDENCES.filter(r => r._key !== ref.key)
+      .concat([Object.assign({ _key: ref.key }, ev)]);
+    rebuildEvidences();
+    done(true);
+  });
 }
 
 function initAuth() {
@@ -587,17 +670,16 @@ function initAuth() {
       title: document.getElementById('ev-title').value.trim(),
       desc: document.getElementById('ev-desc').value.trim(),
       tag: document.getElementById('ev-tag').value.trim() || 'General',
-      img: document.getElementById('ev-img').value.trim() || 'assets/images/render.png',
+      img: document.getElementById('ev-img').value.trim() || 'assets/images/placeholder.svg',
       by: currentUser.email, at: Date.now()
     };
     if (!ev.title) { toast('Pon un título'); return; }
-    console.info('[Evidence] submit:', ev.title, file ? ('archivo ' + file.name + ' ' + Math.round(file.size / 1024) + 'KB') : 'solo link');
     const saveBtn = document.getElementById('ev-save');
     const fileInput = document.getElementById('ev-file');
     const file = fileInput && fileInput.files && fileInput.files[0];
+    console.info('[Evidence] submit:', ev.title, file ? ('archivo ' + file.name + ' ' + Math.round(file.size / 1024) + 'KB') : 'solo link');
     saveBtn.disabled = true;
     saveBtn.textContent = 'Guardando…';
-    await undeleteTitle(ev.title);
     const done = ok => {
       if (!ok) {
         saveBtn.disabled = false;
@@ -605,7 +687,7 @@ function initAuth() {
         return;
       }
       // Confirmación visible DENTRO del modal (no solo toast): se queda 1.5s antes de cerrar
-      driveStatus('✓ Evidencia guardada en Drive y en la galería', 100);
+      driveStatus((file || ev.driveFileId) ? '✓ Evidencia guardada en Drive y en la galería' : '✓ Evidencia guardada en la galería', 100);
       toast('Evidencia guardada');
       setTimeout(() => {
         saveBtn.disabled = false;
@@ -762,12 +844,12 @@ function subscribeDB() {
       const val = s.val();
       REMOTE_EVIDENCES = val ? Object.entries(val).map(([k, v]) => Object.assign({}, v, { _key: k })) : [];
       rebuildEvidences();
-    });
+    }, err => console.warn('[DB] evidencias:', err.code || '', err.message));
     db.ref('deletedEvidences').on('value', s => {
       const val = s.val();
-      DELETED_TITLES = new Set(val ? Object.values(val).map(d => d.title) : []);
+      DELETED_KEYS = new Set(val ? Object.values(val).map(d => d && d.key).filter(Boolean) : []);
       rebuildEvidences();
-    });
+    }, err => console.warn('[DB] borrados:', err.code || '', err.message));
   } catch(e) {}
 }
 
@@ -815,7 +897,7 @@ function initEffects() {
   if (cv) {
     const ctx = cv.getContext('2d');
     let W, H, pts = [];
-    const resize = () => { W = cv.width = innerWidth; H = cv.height = innerHeight; };
+    const resize = () => { W = cv.width = document.documentElement.clientWidth; H = cv.height = document.documentElement.clientHeight; };
     resize(); addEventListener('resize', resize);
     for (let i = 0; i < 55; i++) pts.push({ x: Math.random()*innerWidth, y: Math.random()*innerHeight, vx: (Math.random()-.5)*.35, vy: (Math.random()-.5)*.35 });
     (function loop() {
@@ -836,23 +918,64 @@ function initEffects() {
   const themeBtn = document.getElementById('theme-toggle');
   const moonIcon = document.querySelector('.icon-moon');
   const sunIcon = document.querySelector('.icon-sun');
-  
-  const savedTheme = localStorage.getItem('aida-theme');
-  if (savedTheme) { theme = savedTheme; html.setAttribute('data-theme', theme); }
-  else if (window.matchMedia('(prefers-color-scheme: light)').matches) { theme = 'light'; html.setAttribute('data-theme', theme); }
-  
+  const metaTheme = document.querySelector('meta[name="theme-color"]');
+
+  let savedTheme = null;
+  try { savedTheme = localStorage.getItem('aida-theme'); } catch (e) {}
+  const systemLight = !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches);
+  theme = (savedTheme === 'light' || savedTheme === 'dark') ? savedTheme : (systemLight ? 'light' : 'dark');
+
+  function paintTheme() {
+    html.setAttribute('data-theme', theme);
+    html.style.colorScheme = theme;
+    if (moonIcon) moonIcon.style.display = theme === 'dark' ? 'block' : 'none';
+    if (sunIcon) sunIcon.style.display = theme === 'light' ? 'block' : 'none';
+    if (themeBtn) {
+      themeBtn.setAttribute('aria-pressed', theme === 'light' ? 'true' : 'false');
+      const label = theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro';
+      themeBtn.setAttribute('aria-label', label);
+      themeBtn.title = label;
+    }
+    if (metaTheme) metaTheme.setAttribute('content', theme === 'dark' ? '#07090d' : '#f6f8fc');
+  }
+
   function toggleTheme() {
     theme = theme === 'dark' ? 'light' : 'dark';
-    html.setAttribute('data-theme', theme);
-    localStorage.setItem('aida-theme', theme);
-    if (moonIcon) moonIcon.style.display = theme === 'dark' ? 'block' : 'none';
-    if (sunIcon) sunIcon.style.display = theme === 'light' ? 'block' : 'none';
+    try { localStorage.setItem('aida-theme', theme); } catch (e) {}
+    paintTheme();
   }
-  
-  if (themeBtn) {
-    themeBtn.addEventListener('click', toggleTheme);
-    if (moonIcon) moonIcon.style.display = theme === 'dark' ? 'block' : 'none';
-    if (sunIcon) sunIcon.style.display = theme === 'light' ? 'block' : 'none';
+
+  if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
+  paintTheme();
+
+  // Scroll spy: marca el enlace de la seccion que se esta viendo.
+  const navLinks = Array.from(document.querySelectorAll('.nav a[href^="#"]'));
+  if (navLinks.length && 'IntersectionObserver' in window) {
+    const spy = new IntersectionObserver(entries => {
+      entries.forEach(en => {
+        if (!en.isIntersecting) return;
+        navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + en.target.id));
+      });
+    }, { rootMargin: '-40% 0px -55% 0px' });
+    navLinks.forEach(a => {
+      const sec = document.querySelector(a.getAttribute('href'));
+      if (sec) spy.observe(sec);
+    });
+  }
+
+  // Menu movil
+  const navToggle = document.getElementById('nav-toggle');
+  const siteNav = document.getElementById('site-nav');
+  if (navToggle && siteNav) {
+    navToggle.addEventListener('click', () => {
+      const open = siteNav.classList.toggle('open');
+      navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    siteNav.addEventListener('click', e => {
+      if (!e.target.closest('a')) return;
+      siteNav.classList.remove('open');
+      navToggle.setAttribute('aria-expanded', 'false');
+    });
   }
 
   document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal.open,.lightbox.open').forEach(m => m.classList.remove('open')); });
@@ -868,5 +991,5 @@ function initEffects() {
 document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal.open,.lightbox.open').forEach(m => m.classList.remove('open')); });
 
 document.addEventListener('DOMContentLoaded', () => {
-  renderGantt(); renderKanban(); renderTeam(); renderEvidences(); initProgress(); initAuth(); updateAuthUI(); initEffects(); initKanbanTools(); initTaskModal(); initEvidenceTools();
+  renderGantt(); renderKanban(); renderTeam(); renderEvidences(); initProgress(); initAuth(); updateAuthUI(); initEffects(); initKanbanTools(); initTaskModal(); initEvidenceTools(); initDropzone();
 });

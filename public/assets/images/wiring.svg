@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="Esquema de conexion ESP32 y pantalla OLED I2C">
+  <defs>
+    <linearGradient id="bg3" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1220"/><stop offset="1" stop-color="#0f1828"/>
+    </linearGradient>
+    <style>
+      .pin{fill:#c9d5e6;font-family:monospace;font-size:11px}
+      .wire{stroke-width:3;fill:none;stroke-linecap:round}
+      .tag{font-family:monospace;font-size:12px}
+    </style>
+  </defs>
+  <rect width="800" height="500" fill="url(#bg3)"/>
+  <text x="40" y="52" fill="#00e5ff" font-family="monospace" font-size="15" letter-spacing="4">ESQUEMA I2C</text>
+  <text x="40" y="76" fill="#7f8ea5" font-family="monospace" font-size="12" letter-spacing="2">ESP32 · SSD1306 · 3V3</text>
+
+  <!-- ESP32 -->
+  <rect x="90" y="140" width="230" height="250" rx="14" fill="#10203a" stroke="#2a4a74" stroke-width="3"/>
+  <rect x="150" y="150" width="110" height="70" rx="6" fill="#1b3355" stroke="#2f5c92" stroke-width="2"/>
+  <text x="205" y="192" fill="#9fc4ee" font-family="monospace" font-size="14" text-anchor="middle">ESP32</text>
+  <g class="pin" text-anchor="end">
+    <text x="310" y="175">3V3</text>
+    <text x="310" y="215">GND</text>
+    <text x="310" y="255">GPIO21</text>
+    <text x="310" y="295">GPIO22</text>
+  </g>
+  <g fill="#00e5ff">
+    <circle cx="322" cy="170" r="5"/><circle cx="322" cy="210" r="5"/>
+    <circle cx="322" cy="250" r="5"/><circle cx="322" cy="290" r="5"/>
+  </g>
+
+  <!-- OLED -->
+  <rect x="520" y="140" width="200" height="150" rx="10" fill="#05070b" stroke="#00e5ff" stroke-width="3"/>
+  <rect x="540" y="162" width="160" height="86" rx="4" fill="#0a1626"/>
+  <text x="620" y="214" fill="#00e5ff" font-family="monospace" font-size="15" text-anchor="middle">AIDA+</text>
+  <text x="620" y="330" fill="#7f8ea5" font-family="monospace" font-size="12" text-anchor="middle">SSD1306 128x64</text>
+  <g class="pin" text-anchor="start">
+    <text x="512" y="175">VCC</text>
+    <text x="512" y="215">GND</text>
+    <text x="512" y="255">SDA</text>
+    <text x="512" y="295">SCL</text>
+  </g>
+  <g fill="#00e5ff">
+    <circle cx="510" cy="170" r="5"/><circle cx="510" cy="210" r="5"/>
+    <circle cx="510" cy="250" r="5"/><circle cx="510" cy="290" r="5"/>
+  </g>
+
+  <!-- cables -->
+  <path class="wire" d="M322 170 C400 120 430 170 510 170" stroke="#ff5d5d"/>
+  <path class="wire" d="M322 210 C400 160 430 210 510 210" stroke="#8b96a8"/>
+  <path class="wire" d="M322 250 C400 200 430 250 510 250" stroke="#00e5ff"/>
+  <path class="wire" d="M322 290 C400 240 430 290 510 290" stroke="#ffcf4d"/>
+
+  <g class="tag">
+    <text x="392" y="112" fill="#ff8a8a">3V3</text>
+    <text x="392" y="330" fill="#00e5ff">SDA · GPIO21</text>
+    <text x="392" y="352" fill="#ffcf4d">SCL · GPIO22</text>
+  </g>
+</svg>
