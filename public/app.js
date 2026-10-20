@@ -916,6 +916,7 @@ function subscribeDB() {
         setProgressUI(v.value);
       }
     });
+    db.ref('deletedEvidences').on('value', s => {
       const val = s.val();
       DELETED_KEYS = new Set(val ? Object.values(val).map(d => d && d.key).filter(Boolean) : []);
       rebuildEvidences();
