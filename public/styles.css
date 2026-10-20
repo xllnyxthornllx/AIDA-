@@ -532,3 +532,8 @@ footer code { color:var(--cyan); font-family:'JetBrains Mono',monospace; }
   .lab-table td code, .lab-table td { word-break:break-word; }
   .dz-meta strong { max-width:160px; }
 }
+
+/* Pie de la tarjeta de evidencia */
+.evidence-body { align-items:flex-start; }
+.evidence-body p { width:100%; }
+.evidence-foot { margin-top:auto; display:flex; align-items:center; gap:7px; flex-wrap:wrap; }

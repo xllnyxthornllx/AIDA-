@@ -193,7 +193,7 @@ function renderEvidences() {
         ? `<a class="evidence-doc" href="${escapeHtml(e.link)}" target="_blank" rel="noopener"><span class="doc-icon">${e.icon === 'FOLDER' ? '&#128193;' : 'DOC'}</span><span>${escapeHtml(e.label || 'Abrir documento')}</span></a>`
         : `<img class="evidence-thumb" src="${escapeHtml(e.thumb)}" alt="${escapeHtml(e.title)}" loading="lazy" onerror="this.closest('.evidence-card').querySelector('.evidence-fallback').style.display='flex';this.remove()"><span class="evidence-open" aria-hidden="true">Ver</span>`}
       <div class="evidence-fallback" style="display:none"><a href="${escapeHtml(e.link)}" target="_blank" rel="noopener">Ver archivo</a></div>
-      <div class="evidence-body"><h4>${escapeHtml(e.title)}</h4><p>${escapeHtml(e.desc)}</p><span class="evidence-tag">#${escapeHtml(e.tag || 'General')}</span>${e.by ? `<small class="evidence-by">&middot; ${escapeHtml(String(e.by).split('@')[0])}</small>` : ''}</div>
+      <div class="evidence-body"><h4>${escapeHtml(e.title)}</h4><p>${escapeHtml(e.desc)}</p><div class="evidence-foot"><span class="evidence-tag">#${escapeHtml(e.tag || 'General')}</span>${e.by ? `<small class="evidence-by">&middot; ${escapeHtml(String(e.by).split('@')[0])}</small>` : ''}</div></div>
     </div>`; }).join('');
   document.querySelectorAll('.evidence-card').forEach(card => {
     card.addEventListener('click', ev => {
