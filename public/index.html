@@ -72,6 +72,8 @@
         <a href="#evidencias">Evidencias</a>
         <a href="#lab09">Laboratorio 9</a>
         <a href="#equipo">Equipo</a>
+        <a href="https://dashboard.teckcloud.xyz" target="_blank" rel="noopener">Dashboard Cloud</a>
+        <a href="https://github.com/xllnyxthornllx/AIDA-" target="_blank" rel="noopener">GitHub</a>
       </nav>
       <div class="header-actions">
         <button id="auth-btn" class="auth-btn" aria-expanded="false" aria-controls="auth-modal"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Iniciar sesión</span></button>
@@ -103,8 +105,9 @@
             </div>
         </div>
           <div class="hero-actions">
-            <a href="#kanban" class="btn-primary">Ir al Kanban</a>
-            <a href="#evidencias" class="btn-ghost">Ver Evidencias</a>
+            <a href="https://dashboard.teckcloud.xyz" target="_blank" rel="noopener" class="btn-primary">📊 Dashboard Cloud</a>
+            <a href="#kanban" class="btn-ghost">Tablero Kanban</a>
+            <a href="https://github.com/xllnyxthornllx/AIDA-" target="_blank" rel="noopener" class="btn-ghost">⭐ GitHub</a>
           </div>
         </div>
         <div class="hero-visual reveal">
@@ -185,19 +188,19 @@
             <p>Datos usados por el firmware del ESP32 y por el dashboard, verificados de extremo a extremo.</p>
             <table class="lab-table">
               <tbody>
-                <tr><th>Broker MQTT</th><td><code>54.94.50.247:1883</code></td></tr>
-                <tr><th>Usuario MQTT</th><td><code>aida</code> · contraseña no publicada por seguridad</td></tr>
+                <tr><th>Broker MQTT</th><td><code>86.48.22.136:1883</code> (Cloud) · <code>54.94.50.247:1883</code> (AWS)</td></tr>
+                <tr><th>Usuario MQTT</th><td><code>aida</code> · contraseña protegida</td></tr>
                 <tr><th>Tópico de subida</th><td><code>aida/telemetry</code> · QoS 0 · cada 3 s</td></tr>
                 <tr><th>Tópico de bajada</th><td><code>aida/commands</code> · QoS 0 · por evento</td></tr>
-                <tr><th>Editor Node-RED</th><td><code>http://54.94.50.247:1880</code></td></tr>
-                <tr><th>Dashboard</th><td><code>/ui</code> → página <strong>AIDA+ LAB 9</strong></td></tr>
-                <tr><th>WiFi del simulador</th><td><code>Wokwi-GUEST</code></td></tr>
+                <tr><th>Dashboard Cloud</th><td><a href="https://dashboard.teckcloud.xyz" target="_blank" rel="noopener"><code>dashboard.teckcloud.xyz</code></a></td></tr>
+                <tr><th>Node-RED Web</th><td><a href="https://aida.teckcloud.xyz" target="_blank" rel="noopener"><code>aida.teckcloud.xyz</code></a></td></tr>
+                <tr><th>WiFi simulador</th><td><code>Wokwi-GUEST</code></td></tr>
               </tbody>
             </table>
-            <div class="chip-row"><span class="chip">ESP32</span><span class="chip">FreeRTOS</span><span class="chip">PubSubClient</span><span class="chip">Mosquitto 2.0.22</span><span class="chip">Node-RED 4.1.15</span><span class="chip">Dashboard 2.0</span></div>
+            <div class="chip-row"><span class="chip">ESP32</span><span class="chip">FreeRTOS</span><span class="chip">PubSubClient</span><span class="chip">Mosquitto</span><span class="chip">Node-RED</span><span class="chip">Dashboard 2.0</span><span class="chip">Cloudflare Zero Trust</span></div>
             <div class="lab-actions">
-              <a class="btn-primary small" href="http://54.94.50.247:1880/ui" target="_blank" rel="noopener">Abrir dashboard</a>
-              <a class="btn-ghost small" href="https://github.com/xllnyxthornllx/AIDA-/tree/main/content" target="_blank" rel="noopener">Ver código y UML</a>
+              <a class="btn-primary small" href="https://dashboard.teckcloud.xyz" target="_blank" rel="noopener">Abrir Dashboard Cloud</a>
+              <a class="btn-ghost small" href="https://github.com/xllnyxthornllx/AIDA-" target="_blank" rel="noopener">Repositorio GitHub</a>
             </div>
           </article>
 
@@ -249,6 +252,11 @@
   <footer role="contentinfo">
     <div class="container footer-inner">
       <p><strong>AIDA+</strong> — Tecsup Arequipa · Implementación de Tecnologías Emergentes</p>
+      <p>
+        <a href="https://aidaplus.vercel.app" target="_blank" rel="noopener" style="color:var(--cyan);text-decoration:none">🌐 Portal Oficial (Vercel)</a> · 
+        <a href="https://dashboard.teckcloud.xyz" target="_blank" rel="noopener" style="color:var(--cyan);text-decoration:none">📊 Dashboard Cloud</a> · 
+        <a href="https://github.com/xllnyxthornllx/AIDA-" target="_blank" rel="noopener" style="color:var(--cyan);text-decoration:none">⭐ GitHub: xllnyxthornllx/AIDA-</a>
+      </p>
       <p>Docente auditor: <code>rllerenad@tecsup.edu.pe</code> · © 2026 · <span id="app-version">v20</span></p>
     </div>
   </footer>
