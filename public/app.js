@@ -25,6 +25,12 @@ let KANBAN_TASKS = [
 ];
 
 let EVIDENCES = [
+  { title:'Dashboard IoT en Tiempo Real', desc:'Gauges de sensores DHT22, micrófono ADC y mapa GPS en Node-RED Dashboard 2.0.', tag:'Lab09', img:'assets/images/EVIDENCIA-4-dashboard-sensores.png' },
+  { title:'Gemelo Digital y Telemetría', desc:'Visualización del nodo central AIDA+ y variables ambientales en vivo.', tag:'Hardware', img:'assets/images/aida_visible.png' },
+  { title:'Diagrama UML de Componentes', desc:'Arquitectura de hardware, periféricos I2C/PWM/UART y bus de datos del ESP32.', tag:'UML', img:'assets/images/EVIDENCIA-8a-componentes.png' },
+  { title:'Diagrama de Bloques del Sistema', desc:'Interconexión entre nodo ESP32, broker MQTT, servidor cloud e interfaces de control.', tag:'UML', img:'assets/images/EVIDENCIA-8b-bloques.png' },
+  { title:'Máquina de Estados Finitos (FSM)', desc:'Ciclo de vida del asistente: IDLE, LISTENING, PROCESSING, ALERT y SLEEP.', tag:'UML', img:'assets/images/EVIDENCIA-8c-estados.png' },
+  { title:'Diagrama de Secuencia MQTT', desc:'Flujo de telemetría cíclica (3s) y comandos asíncronos aida/commands.', tag:'UML', img:'assets/images/EVIDENCIA-8d-secuencia.png' },
   { title:'Render 3D — AIDA+', desc:'Modelo digital del asistente creado en Fusion 360.', tag:'Diseño', img:'assets/images/render.svg' },
   { title:'Arquitectura del Sistema', desc:'Diagrama Nodo Central ↔ Esclavos ↔ Broker MQTT.', tag:'Docs', img:'assets/images/architecture.svg' },
   { title:'Esquema ESP32 — OLED I2C', desc:'Conexión SSD1306 SDA/SCL y alimentación 3.3V.', tag:'Hardware', img:'assets/images/wiring.svg' }
@@ -491,7 +497,6 @@ function initProgress() {
       }
     });
   }
-  // No initCharts() call anymore - avoids CSP errors
 }
 
 // ===== MODALES =====
@@ -561,8 +566,6 @@ function updateAuthUI() {
 }
 
 // ===== GOOGLE DRIVE UPLOAD (Drive API v3, carpeta del equipo) =====
-// El token de Drive caduca en ~1 h: si tiene mas de 50 min se descarta solo,
-// para no guardar evidencias con un token muerto.
 const DRIVE_TOKEN_TTL = 50 * 60 * 1000;
 
 function driveToken() {
@@ -636,7 +639,6 @@ function uploadToDrive(file, onProgress) {
     const token = driveToken();
     if (!token) { reject(new Error('Sin token de Drive. Entra con "Continuar con Google".')); return; }
     console.info('[Drive] subiendo:', file.name, Math.round(file.size / 1024) + ' KB');
-    // FormData = streaming desde disco, sin duplicar el archivo en memoria (no tumba la pestaña)
     const meta = { name: Date.now() + '_' + file.name, parents: [DRIVE_FOLDER_ID] };
     const form = new FormData();
     form.append('metadata', new Blob([JSON.stringify(meta)], { type: 'application/json' }));
@@ -650,7 +652,6 @@ function uploadToDrive(file, onProgress) {
         let f;
         try { f = JSON.parse(xhr.responseText); } catch (e) { reject(new Error('Respuesta inválida de Drive')); return; }
         console.info('[Drive] archivo creado:', f.id);
-        // Hacer público con link para que la miniatura/galería funcione
         const xp = new XMLHttpRequest();
         xp.open('POST', 'https://www.googleapis.com/drive/v3/files/' + f.id + '/permissions');
         xp.setRequestHeader('Authorization', 'Bearer ' + token);
@@ -689,7 +690,6 @@ function saveEvidence(ev, saveBtn, done) {
       return;
     }
     console.info('[Evidence] guardado con clave', ref.key);
-    // Se pinta al instante; el listener de RTDB confirmará el mismo registro.
     REMOTE_EVIDENCES = REMOTE_EVIDENCES.filter(r => r._key !== ref.key)
       .concat([Object.assign({ _key: ref.key }, ev)]);
     rebuildEvidences();
@@ -717,7 +717,6 @@ function initAuth() {
     paintDriveState();
     openModal('evidence-modal');
   });
-  // Mostrar / ocultar contraseña
   document.getElementById('pass-toggle').addEventListener('click', () => {
     const p = document.getElementById('auth-pass');
     const show = p.type === 'password';
@@ -747,7 +746,6 @@ function initAuth() {
         saveBtn.textContent = 'Guardar';
         return;
       }
-      // Confirmación visible DENTRO del modal (no solo toast): se queda 1.5s antes de cerrar
       driveStatus((file || ev.driveFileId) ? '✓ Evidencia guardada en Drive y en la galería' : '✓ Evidencia guardada en la galería', 100);
       toast('Evidencia guardada');
       setTimeout(() => {
@@ -791,8 +789,6 @@ function initAuth() {
     saveEvidence(ev, saveBtn, done);
   });
 
-  // FIREBASE INIT - simplified, no Chart dependencies.
-  // Guard anti-duplicado: firebase-config.js ya NO inicializa.
   if (typeof FIREBASE_ENABLED === 'undefined' || !FIREBASE_ENABLED || typeof firebase === 'undefined') {
     updateAuthUI(); return;
   }
@@ -804,7 +800,6 @@ function initAuth() {
 
   const setLoading = on => document.getElementById('auth-login').classList.toggle('loading', !!on);
 
-  // Login con correo (submit del form: click + Enter, sin recargar)
   document.getElementById('auth-form').addEventListener('submit', async e => {
     e.preventDefault();
     const email = document.getElementById('auth-email').value.trim();
@@ -820,9 +815,6 @@ function initAuth() {
     } finally { setLoading(false); }
   });
 
-  // Login con Google: solo popup. Si el navegador lo bloquea, se guía al
-  // login con correo (el redirect falla en Firefox con storage particionado).
-  // Se pide scope drive.file para subir evidencias al Drive del equipo.
   let googleBusy = false;
   document.getElementById('auth-google').addEventListener('click', async () => {
     if (googleBusy) return;
@@ -856,7 +848,6 @@ function initAuth() {
     toast('Sesión cerrada');
   });
 
-  // Reconectar Drive: re-login con Google en el mismo gesto (evita bloqueo de popup)
   document.getElementById('drive-reconnect').addEventListener('click', async () => {
     const btn = document.getElementById('drive-reconnect');
     btn.disabled = true;
@@ -1019,7 +1010,6 @@ function initEffects() {
   if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
   paintTheme();
 
-  // Scroll spy: marca el enlace de la seccion que se esta viendo.
   const navLinks = Array.from(document.querySelectorAll('.nav a[href^="#"]'));
   if (navLinks.length && 'IntersectionObserver' in window) {
     const spy = new IntersectionObserver(entries => {
@@ -1034,7 +1024,6 @@ function initEffects() {
     });
   }
 
-  // Menu movil
   const navToggle = document.getElementById('nav-toggle');
   const siteNav = document.getElementById('site-nav');
   if (navToggle && siteNav) {
@@ -1052,13 +1041,6 @@ function initEffects() {
   document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal.open,.lightbox.open').forEach(m => m.classList.remove('open')); });
 }
 
-// ===== CHART INIT REMOVED - no Chart.js to avoid CSP errors =====
-// initCharts function removed completely to prevent:
-// - EvalError: call to Function() blocked by CSP
-// - MIME type mismatches from CDN Chart.js CSS
-// - Blocking loading due to external script errors
-
-// ===== KEYDOWN =====
 document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal.open,.lightbox.open').forEach(m => m.classList.remove('open')); });
 
 document.addEventListener('DOMContentLoaded', () => {
